@@ -2,12 +2,11 @@
 #define PEER_H
 #include "file.h"
 
-#define IP_ADDR_SIZE 256
-#define PORT_ADDR_SIZE 256
+#include <netinet/in.h>
 
 struct peer_t {
-  char ip_addr[IP_ADDR_SIZE];
-  char port[PORT_ADDR_SIZE];
+  struct sockaddr_in cli_addr;
+  int port;
   struct file_t *files;
   unsigned int **bitmaps;
 };
