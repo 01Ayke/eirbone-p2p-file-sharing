@@ -1,1 +1,3 @@
 peer/target
+compile_commands.json
+tracker/build/*
