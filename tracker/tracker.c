@@ -6,8 +6,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#define MAX_PEERS 100
-#define MAX_FILES 500
+#define DEFAULT_MAX_PEERS 100
+#define DEFAULT_MAX_FILES 500
 #define MAX_FILENAME 256
 #define MAX_KEY 64
 #define MAX_LINE 4096
@@ -31,12 +31,23 @@ typedef struct {
     char owners[MAX_PEERS_PER_FILE][64]; // "ip:port"
     int owner_count;
 } FileEntry;
+typedef struct {
+    int tracker_port;
+    int max_peers;
+    int max_files;
+    int timeout;
+    int backlog;
+    char log_level[32];
+    char log_file[256];
+} Config;
 
-static Peer peers[MAX_PEERS];
+static Peer *peers = NULL;
 static int peer_count = 0;
+static int peers_capacity = 0;
 
-static FileEntry files[MAX_FILES];
+static FileEntry *files = NULL;
 static int file_count = 0;
+static int files_capacity = 0;
 
 /* ===========================
    Utilitaires
@@ -83,7 +94,7 @@ Peer *find_or_create_peer(const char *ip, int listen_port) {
         }
     }
 
-    if (peer_count >= MAX_PEERS) return NULL;
+    if (peer_count >= peers_capacity) return NULL;
 
     Peer *p = &peers[peer_count++];
     memset(p, 0, sizeof(Peer));
@@ -113,7 +124,7 @@ FileEntry *find_or_create_file(const char *filename, long length, int piece_size
     FileEntry *f = find_file_by_key(key);
     if (f) return f;
 
-    if (file_count >= MAX_FILES) return NULL;
+    if (file_count >= files_capacity ) return NULL;
 
     f = &files[file_count++];
     memset(f, 0, sizeof(FileEntry));
@@ -149,6 +160,79 @@ void add_leech_key(Peer *p, const char *key) {
     }
 }
 
+void set_default_config(Config *cfg) {
+    cfg->tracker_port = 9000;
+    cfg->max_peers = 100;
+    cfg->max_files = 500;
+    cfg->timeout = 30;
+    cfg->backlog = 10;
+    strcpy(cfg->log_level, "info");
+    strcpy(cfg->log_file, "tracker.log");
+}
+
+void trim_spaces(char *s) {
+    char *start = s;
+    while (*start == ' ' || *start == '\t') start++;
+    if (start != s) memmove(s, start, strlen(start) + 1);
+
+    char *end = s + strlen(s) - 1;
+    while (end >= s && (*end == ' ' || *end == '\t')) {
+        *end = '\0';
+        end--;
+    }
+}
+
+int load_config(const char *filename, Config *cfg) {
+    FILE *f = fopen(filename, "r");
+    if (!f) return -1;
+
+    char line[512];
+    char section[64] = "";
+
+    while (fgets(line, sizeof(line), f)) {
+        trim_newline(line);
+        trim_spaces(line);
+
+        if (line[0] == '\0' || line[0] == '#' || line[0] == ';')
+            continue;
+
+        if (line[0] == '[') {
+            char *end = strchr(line, ']');
+            if (end) {
+                *end = '\0';
+                strcpy(section, line + 1);
+            }
+            continue;
+        }
+
+        char *eq = strchr(line, '=');
+        if (!eq) continue;
+
+        *eq = '\0';
+        char key[128], value[256];
+
+        strcpy(key, line);
+        strcpy(value, eq + 1);
+
+        trim_spaces(key);
+        trim_spaces(value);
+
+        if (strcmp(section, "tracker") == 0) {
+            if (strcmp(key, "port") == 0) cfg->tracker_port = atoi(value);
+            else if (strcmp(key, "max_peers") == 0) cfg->max_peers = atoi(value);
+            else if (strcmp(key, "max_files") == 0) cfg->max_files = atoi(value);
+        } else if (strcmp(section, "network") == 0) {
+            if (strcmp(key, "timeout") == 0) cfg->timeout = atoi(value);
+            else if (strcmp(key, "backlog") == 0) cfg->backlog = atoi(value);
+        } else if (strcmp(section, "log") == 0) {
+            if (strcmp(key, "level") == 0) strcpy(cfg->log_level, value);
+            else if (strcmp(key, "file") == 0) strcpy(cfg->log_file, value);
+        }
+    }
+
+    fclose(f);
+    return 0;
+}
 /* ===========================
    Parsing simple
    =========================== */
@@ -434,12 +518,24 @@ void handle_client(int client_fd, struct sockaddr_in *client_addr) {
    =========================== */
 
 int main(int argc, char *argv[]) {
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s <port>\n", argv[0]);
-        return 1;
-    }
+  Config cfg;
+set_default_config(&cfg);
 
-    int port = atoi(argv[1]);
+if (load_config("config.ini", &cfg) != 0) {
+    printf("config.ini non trouvé, valeurs par défaut utilisées\n");
+}
+
+int port = cfg.tracker_port;
+peers_capacity = cfg.max_peers;
+files_capacity = cfg.max_files;
+
+peers = malloc(sizeof(Peer) * peers_capacity);
+files = malloc(sizeof(FileEntry) * files_capacity);
+
+if (!peers || !files) {
+    perror("malloc");
+    return 1;
+}
 
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd < 0) {
@@ -466,7 +562,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    if (listen(server_fd, 10) < 0) {
+    if (listen(server_fd, cfg.backlog) < 0) {
         perror("listen");
         close(server_fd);
         return 1;
