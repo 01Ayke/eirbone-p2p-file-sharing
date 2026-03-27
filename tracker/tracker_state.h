@@ -2,6 +2,7 @@
 #define TRACKER_STATE_H
 
 #include <arpa/inet.h>
+#include <time.h>
 
 #define MAX_FILENAME 256
 #define MAX_KEY 64
@@ -16,6 +17,7 @@ typedef struct {
     int seed_count;
     char leeched_keys[100][MAX_KEY];
     int leech_count;
+    time_t last_seen;
 } Peer;
 
 typedef struct {

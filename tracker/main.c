@@ -5,10 +5,25 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <pthread.h>
 
 #include "config.h"
 #include "tracker_state.h"
 #include "tracker_protocol.h"
+#include "tracker_utils.h"
+
+/* Arguments passés au thread client */
+typedef struct {
+    int                client_fd;
+    struct sockaddr_in client_addr;
+} ThreadArgs;
+
+static void *client_thread(void *arg) {
+    ThreadArgs *ta = (ThreadArgs *)arg;
+    handle_client(ta->client_fd, &ta->client_addr);
+    free(ta);
+    return NULL;
+}
 
 int main(void) {
     Config cfg;
@@ -18,12 +33,13 @@ int main(void) {
         printf("config.ini non trouvé, valeurs par défaut utilisées\n");
     }
 
-    int port = cfg.tracker_port;
+    log_init(cfg.log_file);
+
     peers_capacity = cfg.max_peers;
     files_capacity = cfg.max_files;
-
-    peers = malloc(sizeof(Peer) * peers_capacity);
-    files = malloc(sizeof(FileEntry) * files_capacity);
+    
+    peers = malloc(sizeof(Peer) * (size_t)peers_capacity);
+    files = malloc(sizeof(FileEntry) * (size_t)files_capacity);
 
     if (!peers || !files) {
         perror("malloc");
@@ -32,8 +48,8 @@ int main(void) {
         return 1;
     }
 
-    memset(peers, 0, sizeof(Peer) * peers_capacity);
-    memset(files, 0, sizeof(FileEntry) * files_capacity);
+    memset(peers, 0, sizeof(Peer) * (size_t)peers_capacity);
+    memset(files, 0, sizeof(FileEntry) * (size_t)files_capacity);
 
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd < 0) {
@@ -54,9 +70,9 @@ int main(void) {
 
     struct sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
+    server_addr.sin_family      = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
-    server_addr.sin_port = htons(port);
+    server_addr.sin_port        = htons((uint16_t)cfg.tracker_port);
 
     if (bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
         perror("bind");
@@ -74,7 +90,8 @@ int main(void) {
         return 1;
     }
 
-    printf("Tracker en écoute sur le port %d...\n", port);
+    log_message("INFO", "Tracker démarré sur le port %d (max %d peers, %d fichiers)",
+                cfg.tracker_port, cfg.max_peers, cfg.max_files);
 
     while (1) {
         struct sockaddr_in client_addr;
@@ -86,7 +103,24 @@ int main(void) {
             continue;
         }
 
-        handle_client(client_fd, &client_addr);
+        ThreadArgs *ta = malloc(sizeof(ThreadArgs));
+        if (!ta) {
+            log_message("ERROR", "malloc échoué pour ThreadArgs");
+            close(client_fd);
+            continue;
+        }
+
+        ta->client_fd   = client_fd;
+        ta->client_addr = client_addr;
+
+        pthread_t tid;
+        if (pthread_create(&tid, NULL, client_thread, ta) != 0) {
+            perror("pthread_create");
+            close(client_fd);
+            free(ta);
+            continue;
+        }
+        pthread_detach(tid);
     }
 
     close(server_fd);

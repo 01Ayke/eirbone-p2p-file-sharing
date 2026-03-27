@@ -1,5 +1,7 @@
 #include <string.h>
 #include <stdio.h>
+#include <time.h>
+#include <pthread.h>
 #include "tracker_storage.h"
 
 Peer *peers = NULL;
@@ -10,10 +12,21 @@ FileEntry *files = NULL;
 int file_count = 0;
 int files_capacity = 0;
 
+static pthread_mutex_t storage_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+void storage_lock(void) {
+    pthread_mutex_lock(&storage_mutex);
+}
+
+void storage_unlock(void) {
+    pthread_mutex_unlock(&storage_mutex);
+}
+
 Peer *find_or_create_peer(const char *ip, int listen_port) {
     for (int i = 0; i < peer_count; i++) {
         if (strcmp(peers[i].ip, ip) == 0 && peers[i].listen_port == listen_port) {
             peers[i].connected = 1;
+            peers[i].last_seen = time(NULL);
             return &peers[i];
         }
     }
@@ -28,7 +41,17 @@ Peer *find_or_create_peer(const char *ip, int listen_port) {
     p->ip[sizeof(p->ip) - 1] = '\0';
     p->listen_port = listen_port;
     p->connected = 1;
+    p->last_seen = time(NULL);
     return p;
+}
+
+Peer *find_peer(const char *ip, int listen_port) {
+    for (int i = 0; i < peer_count; i++) {
+        if (strcmp(peers[i].ip, ip) == 0 && peers[i].listen_port == listen_port) {
+            return &peers[i];
+        }
+    }
+    return NULL;
 }
 
 int file_has_owner(FileEntry *f, const char *owner) {
@@ -71,21 +94,29 @@ FileEntry *find_or_create_file(const char *filename, long length, int piece_size
 }
 
 void add_owner_to_file(FileEntry *f, const char *owner) {
-    if (!f) {
-        return;
-    }
-
-    if (f->owner_count >= MAX_PEERS_PER_FILE) {
-        return;
-    }
-
-    if (file_has_owner(f, owner)) {
-        return;
-    }
+    if (!f) return;
+    if (f->owner_count >= MAX_PEERS_PER_FILE) return;
+    if (file_has_owner(f, owner)) return;
 
     strncpy(f->owners[f->owner_count], owner, sizeof(f->owners[f->owner_count]) - 1);
     f->owners[f->owner_count][sizeof(f->owners[f->owner_count]) - 1] = '\0';
     f->owner_count++;
+}
+
+void remove_owner_from_file(FileEntry *f, const char *owner) {
+    if (!f) return;
+
+    for (int i = 0; i < f->owner_count; i++) {
+        if (strcmp(f->owners[i], owner) == 0) {
+            /* Décale les owners restants d'une position vers le haut */
+            for (int j = i; j < f->owner_count - 1; j++) {
+                strncpy(f->owners[j], f->owners[j + 1], sizeof(f->owners[j]));
+                f->owners[j][sizeof(f->owners[j]) - 1] = '\0';
+            }
+            f->owner_count--;
+            return;
+        }
+    }
 }
 
 void clear_peer_keys(Peer *p) {
