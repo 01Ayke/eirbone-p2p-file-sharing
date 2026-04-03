@@ -1,12 +1,19 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c11 -g
-BUILD  = build
-TARGET = tracker
+BUILD   = build
+INSTALL = install
+TARGET  = $(INSTALL)/tracker
 
 SRCS = main.c config.c tracker_utils.c tracker_storage.c tracker_protocol.c
-OBJS = $(BUILD)/$(SRCS:.c=.o)
+OBJS = $(patsubst %.c,$(BUILD)/%.o,$(SRCS))
 
-all: $(TARGET)
+all: $(BUILD) $(INSTALL) $(TARGET)
+
+$(BUILD):
+	mkdir -p $(BUILD)
+
+$(INSTALL):
+	mkdir -p $(INSTALL)
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS)
@@ -27,7 +34,7 @@ $(BUILD)/tracker_protocol.o: tracker_protocol.c tracker_protocol.h tracker_utils
 	$(CC) $(CFLAGS) -c tracker_protocol.c -o $(BUILD)/tracker_protocol.o
 
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -rf $(BUILD) $(INSTALL)
 
 re: clean all
 
