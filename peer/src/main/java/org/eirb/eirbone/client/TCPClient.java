@@ -1,39 +1,36 @@
+package org.eirb.eirbone.client;
+
 import java.io.*;
 import java.net.*;
 
-public class Client 
-{
-	private int port;
-	private InetAddress address;
+public abstract class TCPClient {
+  private Socket socket;
+  private BufferedReader plec;
+  private PrintWriter pred;
 
+  public TCPClient(String host, int port) throws IOException {
 
-	public TCPClient(int port, InetAddress address){
+    socket = new Socket(host, port);
+    System.out.println("SOCKET = " + socket);
+    plec = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+    pred = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
+
+  }
+
+  public void close() throws IOException {
+    System.out.println("END");
+    pred.println("END");
+    pred.close();
+    plec.close();
+    socket.close();
+  }
+
+  public void send(String data) {
+    pred.println(data);
+  }
+
+  public String read() throws IOException {
+    return plec.readLine();
+  }
 
 }
-
-	public static void main (String[] args) throws Exception {
-	
-	Socket socket = new Socket (args [0], port) ;
-	System.out.println ("SOCKET = " + socket);
-	BufferedReader plec = new BufferedReader (
-	new InputStreamReader (socket.getInputStream () )
-	);
-	
-	PrintWriter pred = new PrintWriter (
-	new BufferedWriter (
-	new OutputStreamWriter (Socket.getOutputStream () ) ),
-	true);
-	
-	String str = "bonjour";
-	
-	for (int i = 0; i < 10; i++) {
-		pred.println (str);
-		str = plec.readLine();
-	}
-	
-	System.out.println ("END");
-	pred. println ("END");
-	plec.close ();
-	pred.close();
-	socket.close ();
-	}

@@ -1,0 +1,33 @@
+[2026-04-03 09:47:17] [INFO] Tracker démarré sur le port 9000 (max 100 peers, 500 fichiers)
+[2026-04-03 09:47:36] [INFO] Connexion: 127.0.0.1
+[2026-04-03 09:47:36] [DEBUG] 127.0.0.1 >> bonjour
+[2026-04-03 09:47:36] [DEBUG] 127.0.0.1 >> error unknown command
+[2026-04-03 09:47:36] [DEBUG] 127.0.0.1 >> error unknown command
+[2026-04-03 09:47:36] [DEBUG] 127.0.0.1 >> error unknown command
+[2026-04-03 09:47:36] [DEBUG] 127.0.0.1 >> error unknown command
+[2026-04-03 09:47:36] [DEBUG] 127.0.0.1 >> error unknown command
+[2026-04-03 09:47:36] [DEBUG] 127.0.0.1 >> error unknown command
+[2026-04-03 09:47:36] [DEBUG] 127.0.0.1 >> error unknown command
+[2026-04-03 09:47:36] [DEBUG] 127.0.0.1 >> error unknown command
+[2026-04-03 09:47:36] [DEBUG] 127.0.0.1 >> error unknown command
+[2026-04-03 09:47:36] [DEBUG] 127.0.0.1 >> TOOT
+[2026-04-03 09:47:36] [INFO] Fin connexion: 127.0.0.1
+[2026-04-03 09:56:03] [INFO] Connexion: 127.0.0.1
+[2026-04-03 09:56:03] [DEBUG] 127.0.0.1 >> TOOT
+[2026-04-03 09:56:03] [DEBUG] 127.0.0.1 >> END
+[2026-04-03 09:56:03] [INFO] Fin connexion: 127.0.0.1
+[2026-04-03 09:57:03] [INFO] Connexion: 127.0.0.1
+[2026-04-03 09:57:03] [DEBUG] 127.0.0.1 >> TOOT
+[2026-04-03 09:57:03] [DEBUG] 127.0.0.1 >> END
+[2026-04-03 09:57:03] [INFO] Fin connexion: 127.0.0.1
+[2026-04-03 09:57:28] [INFO] Connexion: 127.0.0.1
+[2026-04-03 09:57:28] [DEBUG] 127.0.0.1 >> TOOT
+[2026-04-03 09:57:28] [DEBUG] 127.0.0.1 >> END
+[2026-04-03 09:57:28] [INFO] Fin connexion: 127.0.0.1
+[2026-04-09 17:23:24] [INFO] Tracker démarré sur le port 9000 (max 100 peers, 500 fichiers)
+[2026-04-09 17:27:07] [INFO] Connexion: 127.0.0.1
+[2026-04-09 17:27:07] [DEBUG] 127.0.0.1 >> announce listen 2000 seed [ toto 234 4 ajs;eoifjo;aseifj ] leech [ ]
+[2026-04-09 17:27:07] [INFO] Announce: 127.0.0.1:2000 — 1 seed(s), 0 leech(es)
+[2026-04-09 17:27:07] [DEBUG] 127.0.0.1 >> END
+[2026-04-09 17:27:07] [INFO] Déconnexion inattendue: 127.0.0.1:2000
+[2026-04-09 17:27:07] [INFO] Fin connexion: 127.0.0.1
