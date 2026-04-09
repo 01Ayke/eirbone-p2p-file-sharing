@@ -12,7 +12,7 @@ public class TrackerClient extends TCPClient {
   }
 
   // TODO: throws custorm error
-  public void announce(int listeningPort, ArrayList<FileInfos> files, ArrayList<String> leech_keys) {
+  public void announce(int listeningPort, ArrayList<FileInfos> files, ArrayList<String> leech_keys) throws IOException {
 
     String toSend = "announce listen " + listeningPort;
     // Files
@@ -25,7 +25,7 @@ public class TrackerClient extends TCPClient {
     }
 
     // Leechs
-    if (files.size() != 0) {
+    if (leech_keys.size() != 0) {
       toSend += " leech [";
       for (String key : leech_keys) {
         toSend += " " + key.toString();
@@ -33,8 +33,20 @@ public class TrackerClient extends TCPClient {
       toSend += " ]";
     }
 
-    this.send(toSend);
+    send(toSend);
+    read();
 
+  }
+
+  public void bye() throws IOException {
+    send("bye");
+    read();
+  }
+
+  @Override
+  public void close() throws IOException {
+    bye();
+    super.close();
   }
 
 }
