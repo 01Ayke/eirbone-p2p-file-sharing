@@ -2,6 +2,7 @@ package org.eirb.eirbone.client.tracker;
 
 import org.eirb.eirbone.client.TCPClient;
 import org.eirb.eirbone.utils.FileInfos;
+import org.eirb.eirbone.utils.Criterion;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -36,6 +37,17 @@ public class TrackerClient extends TCPClient {
     send(toSend);
     read();
 
+  }
+
+  public void look(ArrayList<Criterion> criterions) throws IOException {
+
+    String toSend = "look [";
+    for (Criterion criterion : criterions) {
+      toSend += criterion.toString();
+    }
+    toSend += " ]";
+    send(toSend);
+    read();
   }
 
   public void bye() throws IOException {
