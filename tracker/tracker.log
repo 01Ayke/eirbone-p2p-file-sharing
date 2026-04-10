@@ -139,3 +139,12 @@
 [2026-04-09 23:06:03] [DEBUG] 127.0.0.1 >> fewq
 [2026-04-09 23:06:05] [INFO] Fin connexion: 127.0.0.1
 >>>>>>> Stashed changes
+[2026-04-10 09:03:52] [INFO] Tracker démarré sur le port 9000 (max 100 peers, 500 fichiers)
+[2026-04-10 09:04:44] [INFO] Connexion: 127.0.0.1
+[2026-04-10 09:04:58] [DEBUG] 127.0.0.1 >> announce listen 123 seed [ oifasjeofij 123 321 qwerty ]
+[2026-04-10 09:04:58] [INFO] Announce: 127.0.0.1:123 — 1 seed(s), 0 leech(es)
+[2026-04-10 09:05:00] [INFO] Déconnexion inattendue: 127.0.0.1:123
+[2026-04-10 09:05:00] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 09:05:11] [INFO] Connexion: 127.0.0.1
+[2026-04-10 09:05:41] [DEBUG] 127.0.0.1 >> look [ filename=oifasjeofij
+[2026-04-10 09:05:43] [INFO] Fin connexion: 127.0.0.1
