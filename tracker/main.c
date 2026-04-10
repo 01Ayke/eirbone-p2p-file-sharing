@@ -34,7 +34,7 @@ int main(void) {
         free(files);
         return 1;
     }
-    
+
     memset(peers, 0, sizeof(Peer) * (size_t)peers_capacity);
     memset(files, 0, sizeof(FileEntry) * (size_t)files_capacity);
 
@@ -96,10 +96,8 @@ int main(void) {
         if (thread_pool_add_task(&pool, client_fd, &client_addr) != 0) {
             log_message("WARN", "Queue pleine, connexion rejetée");
             close(client_fd);
-            free(ta);
             continue;
         }
-        pthread_detach(tid);
     }
     
     thread_pool_destroy(&pool);

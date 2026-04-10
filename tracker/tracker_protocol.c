@@ -356,7 +356,7 @@ void handle_client(int client_fd, struct sockaddr_in *client_addr) {
         log_message("DEBUG", "%s >> %s", ctx.client_ip, line);
 
         if      (starts_with(line, "announce ")) handle_announce(client_fd, line, &ctx);
-        else if (starts_with(line, "look "))     handle_look(client_fd, line);
+        else if (starts_with(line, "look") && (line[4] == '\0' || line[4] == ' ' || line[4] == '\n')) handle_look(client_fd, line);
         else if (starts_with(line, "getfile "))  handle_getfile(client_fd, line);
         else if (starts_with(line, "update "))   handle_update(client_fd, line, &ctx);
         else if (starts_with(line, "bye") ||
