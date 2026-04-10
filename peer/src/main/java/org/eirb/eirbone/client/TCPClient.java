@@ -11,6 +11,7 @@ public abstract class TCPClient {
   public TCPClient(String host, int port) throws IOException {
 
     socket = new Socket(host, port);
+    socket.setSoTimeout(2000);
     System.out.println("SOCKET = " + socket);
     plec = new BufferedReader(new InputStreamReader(socket.getInputStream()));
     pred = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);

@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 [2026-04-10 02:12:36] [INFO] Thread pool initialisé: 4 threads, queue 50
 [2026-04-10 02:12:36] [INFO] Tracker démarré sur le port 9000 (max 100 peers, 500 fichiers, pool 4 threads)
 [2026-04-10 02:34:29] [INFO] Thread pool initialisé: 4 threads, queue 50
@@ -54,3 +55,87 @@
 [2026-04-10 04:38:32] [DEBUG] 127.0.0.1 >> look []
 [2026-04-10 04:39:58] [INFO] Thread pool initialisé: 4 threads, queue 50
 [2026-04-10 04:40:04] [INFO] Thread pool initialisé: 4 threads, queue 50
+=======
+[2026-04-03 09:47:17] [INFO] Tracker démarré sur le port 9000 (max 100 peers, 500 fichiers)
+[2026-04-03 09:47:36] [INFO] Connexion: 127.0.0.1
+[2026-04-03 09:47:36] [DEBUG] 127.0.0.1 >> bonjour
+[2026-04-03 09:47:36] [DEBUG] 127.0.0.1 >> error unknown command
+[2026-04-03 09:47:36] [DEBUG] 127.0.0.1 >> error unknown command
+[2026-04-03 09:47:36] [DEBUG] 127.0.0.1 >> error unknown command
+[2026-04-03 09:47:36] [DEBUG] 127.0.0.1 >> error unknown command
+[2026-04-03 09:47:36] [DEBUG] 127.0.0.1 >> error unknown command
+[2026-04-03 09:47:36] [DEBUG] 127.0.0.1 >> error unknown command
+[2026-04-03 09:47:36] [DEBUG] 127.0.0.1 >> error unknown command
+[2026-04-03 09:47:36] [DEBUG] 127.0.0.1 >> error unknown command
+[2026-04-03 09:47:36] [DEBUG] 127.0.0.1 >> error unknown command
+[2026-04-03 09:47:36] [DEBUG] 127.0.0.1 >> TOOT
+[2026-04-03 09:47:36] [INFO] Fin connexion: 127.0.0.1
+[2026-04-03 09:56:03] [INFO] Connexion: 127.0.0.1
+[2026-04-03 09:56:03] [DEBUG] 127.0.0.1 >> TOOT
+[2026-04-03 09:56:03] [DEBUG] 127.0.0.1 >> END
+[2026-04-03 09:56:03] [INFO] Fin connexion: 127.0.0.1
+[2026-04-03 09:57:03] [INFO] Connexion: 127.0.0.1
+[2026-04-03 09:57:03] [DEBUG] 127.0.0.1 >> TOOT
+[2026-04-03 09:57:03] [DEBUG] 127.0.0.1 >> END
+[2026-04-03 09:57:03] [INFO] Fin connexion: 127.0.0.1
+[2026-04-03 09:57:28] [INFO] Connexion: 127.0.0.1
+[2026-04-03 09:57:28] [DEBUG] 127.0.0.1 >> TOOT
+[2026-04-03 09:57:28] [DEBUG] 127.0.0.1 >> END
+[2026-04-03 09:57:28] [INFO] Fin connexion: 127.0.0.1
+[2026-04-09 17:23:24] [INFO] Tracker démarré sur le port 9000 (max 100 peers, 500 fichiers)
+[2026-04-09 17:27:07] [INFO] Connexion: 127.0.0.1
+[2026-04-09 17:27:07] [DEBUG] 127.0.0.1 >> announce listen 2000 seed [ toto 234 4 ajs;eoifjo;aseifj ] leech [ ]
+[2026-04-09 17:27:07] [INFO] Announce: 127.0.0.1:2000 — 1 seed(s), 0 leech(es)
+[2026-04-09 17:27:07] [DEBUG] 127.0.0.1 >> END
+[2026-04-09 17:27:07] [INFO] Déconnexion inattendue: 127.0.0.1:2000
+[2026-04-09 17:27:07] [INFO] Fin connexion: 127.0.0.1
+[2026-04-09 22:33:45] [INFO] Tracker démarré sur le port 9000 (max 100 peers, 500 fichiers)
+[2026-04-09 22:33:53] [INFO] Connexion: 127.0.0.1
+[2026-04-09 22:34:18] [INFO] Fin connexion: 127.0.0.1
+[2026-04-09 22:34:22] [INFO] Connexion: 127.0.0.1
+[2026-04-09 22:34:45] [INFO] Fin connexion: 127.0.0.1
+[2026-04-09 22:34:47] [INFO] Connexion: 127.0.0.1
+[2026-04-09 22:35:24] [INFO] Fin connexion: 127.0.0.1
+[2026-04-09 22:35:26] [INFO] Connexion: 127.0.0.1
+[2026-04-09 22:36:09] [INFO] Fin connexion: 127.0.0.1
+[2026-04-09 22:36:11] [INFO] Connexion: 127.0.0.1
+[2026-04-09 22:42:05] [INFO] Fin connexion: 127.0.0.1
+[2026-04-09 22:42:08] [INFO] Connexion: 127.0.0.1
+[2026-04-09 22:42:09] [DEBUG] 127.0.0.1 >> aoijoaisjdf
+[2026-04-09 22:42:23] [DEBUG] 127.0.0.1 >> announce listen 2222 seed [ filename 123 321 asjdfkl; ]
+[2026-04-09 22:42:23] [INFO] Announce: 127.0.0.1:2222 — 1 seed(s), 0 leech(es)
+[2026-04-09 22:42:27] [DEBUG] 127.0.0.1 >> getfiles
+[2026-04-09 22:42:32] [DEBUG] 127.0.0.1 >> getfile filename
+[2026-04-09 22:42:42] [DEBUG] 127.0.0.1 >> getfile filename=filename
+[2026-04-09 22:42:55] [DEBUG] 127.0.0.1 >> look [ filename=filename
+[2026-04-09 22:48:35] [DEBUG] 127.0.0.1 >> getfile asdfjkl;
+[2026-04-09 22:48:57] [DEBUG] 127.0.0.1 >> getfile asjdfkl;
+[2026-04-09 23:01:26] [INFO] Déconnexion inattendue: 127.0.0.1:2222
+[2026-04-09 23:01:26] [INFO] Fin connexion: 127.0.0.1
+[2026-04-09 23:01:30] [INFO] Connexion: 127.0.0.1
+[2026-04-09 23:01:48] [DEBUG] 127.0.0.1 >> announce listen 2222 seed [ filename 123 321 asjdfkl; ]
+[2026-04-09 23:01:48] [INFO] Announce: 127.0.0.1:2222 — 1 seed(s), 0 leech(es)
+[2026-04-09 23:03:07] [INFO] Déconnexion inattendue: 127.0.0.1:2222
+[2026-04-09 23:03:07] [INFO] Fin connexion: 127.0.0.1
+[2026-04-09 23:03:09] [INFO] Connexion: 127.0.0.1
+[2026-04-09 23:03:12] [DEBUG] 127.0.0.1 >> fjdkl;
+[2026-04-09 23:03:32] [INFO] Fin connexion: 127.0.0.1
+[2026-04-09 23:03:34] [INFO] Connexion: 127.0.0.1
+[2026-04-09 23:03:35] [DEBUG] 127.0.0.1 >> oaisjeoiaj
+[2026-04-09 23:04:19] [INFO] Fin connexion: 127.0.0.1
+[2026-04-09 23:04:21] [INFO] Connexion: 127.0.0.1
+[2026-04-09 23:04:22] [DEBUG] 127.0.0.1 >> bon
+[2026-04-09 23:04:30] [INFO] Fin connexion: 127.0.0.1
+[2026-04-09 23:04:32] [INFO] Connexion: 127.0.0.1
+[2026-04-09 23:04:32] [DEBUG] 127.0.0.1 >> as;oeifj
+[2026-04-09 23:05:26] [INFO] Fin connexion: 127.0.0.1
+[2026-04-09 23:05:29] [INFO] Connexion: 127.0.0.1
+[2026-04-09 23:05:30] [DEBUG] 127.0.0.1 >> asdf
+[2026-04-09 23:05:32] [INFO] Fin connexion: 127.0.0.1
+[2026-04-09 23:05:38] [INFO] Connexion: 127.0.0.1
+[2026-04-09 23:05:39] [DEBUG] 127.0.0.1 >> yes
+[2026-04-09 23:05:41] [INFO] Fin connexion: 127.0.0.1
+[2026-04-09 23:06:02] [INFO] Connexion: 127.0.0.1
+[2026-04-09 23:06:03] [DEBUG] 127.0.0.1 >> fewq
+[2026-04-09 23:06:05] [INFO] Fin connexion: 127.0.0.1
+>>>>>>> Stashed changes

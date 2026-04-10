@@ -2,11 +2,11 @@ package org.eirb.eirbone.utils;
 
 public class Criterion {
 
-  private String parameter;
+  private String value;
   private CriterionType type;
 
-  public Criterion(String parameter, CriterionType type) {
-    this.parameter = parameter;
+  public Criterion(String value, CriterionType type) {
+    this.value = value;
     this.type = type;
   }
 
@@ -15,7 +15,9 @@ public class Criterion {
   public String toString() {
     switch (type) {
       case FILENAME_EQUAL:
-        return "filename=" + parameter;
+        return "filename=" + value;
+      case FILE_LENGTH_GT:
+        return "filelength>" + value;
       default:
         // TODO: throw error
         return "";

@@ -1,6 +1,7 @@
 package org.eirb.eirbone.utils;
 
 public class FileInfos {
+  // TODO: mettre un path ?
   private String filename;
   private long length;
   private int pieceSize;
