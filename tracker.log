@@ -1,0 +1,144 @@
+[2026-04-10 04:26:46] [INFO] Thread pool initialisé: 4 threads, queue 50
+[2026-04-10 04:31:11] [INFO] Thread pool initialisé: 4 threads, queue 50
+[2026-04-10 04:31:11] [INFO] Tracker démarré sur le port 9000 (max 100 peers, 500 fichiers, pool 4 threads)
+[2026-04-10 04:31:47] [INFO] Connexion: 127.0.0.1
+[2026-04-10 04:31:47] [DEBUG] 127.0.0.1 >> look
+[2026-04-10 04:32:02] [INFO] Connexion: 127.0.0.1
+[2026-04-10 04:32:02] [DEBUG] 127.0.0.1 >> announce listen 12345 seed [file1 1000 100 hash1] leech [hash2]
+[2026-04-10 04:32:02] [INFO] Announce: 127.0.0.1:12345 — 1 seed(s), 1 leech(es)
+[2026-04-10 04:32:17] [INFO] Connexion: 127.0.0.1
+[2026-04-10 04:32:17] [DEBUG] 127.0.0.1 >> bye
+[2026-04-10 04:32:17] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 04:43:02] [INFO] Thread pool initialisé: 4 threads, queue 50
+[2026-04-10 04:43:02] [INFO] Tracker démarré sur le port 9000 (max 100 peers, 500 fichiers, pool 4 threads)
+[2026-04-10 04:43:04] [INFO] Connexion: 127.0.0.1
+[2026-04-10 04:43:04] [DEBUG] 127.0.0.1 >> announce listen 12345 seed [file1 1000 100 hash1] leech [hash2]
+[2026-04-10 04:43:04] [INFO] Announce: 127.0.0.1:12345 — 1 seed(s), 1 leech(es)
+[2026-04-10 04:43:34] [INFO] Thread pool initialisé: 4 threads, queue 50
+[2026-04-10 04:43:36] [INFO] Connexion: 127.0.0.1
+[2026-04-10 04:43:36] [DEBUG] 127.0.0.1 >> announce listen 12345 seed [file1 1000 100 hash1] leech [hash2]
+[2026-04-10 04:43:36] [INFO] Announce: 127.0.0.1:12345 — 1 seed(s), 1 leech(es)
+[2026-04-10 04:44:12] [INFO] Thread pool initialisé: 4 threads, queue 50
+[2026-04-10 04:44:12] [INFO] Tracker démarré sur le port 9000 (max 100 peers, 500 fichiers, pool 4 threads)
+[2026-04-10 04:44:14] [INFO] Connexion: 127.0.0.1
+[2026-04-10 04:44:14] [DEBUG] 127.0.0.1 >> announce listen 12345 seed [file1 1000 100 hash1] leech [hash2]
+[2026-04-10 04:44:14] [INFO] Announce: 127.0.0.1:12345 — 1 seed(s), 1 leech(es)
+[2026-04-10 04:45:03] [INFO] Thread pool initialisé: 4 threads, queue 50
+[2026-04-10 04:45:03] [INFO] Tracker démarré sur le port 9000 (max 100 peers, 500 fichiers, pool 4 threads)
+[2026-04-10 04:45:05] [INFO] Connexion: 127.0.0.1
+[2026-04-10 04:45:05] [DEBUG] 127.0.0.1 >> announce listen 12345 seed [file1 1000 100 hash1] leech [hash2]
+[2026-04-10 04:45:05] [INFO] Announce: 127.0.0.1:12345 — 1 seed(s), 1 leech(es)
+[2026-04-10 04:49:08] [INFO] Thread pool initialisé: 4 threads, queue 50
+[2026-04-10 04:49:08] [INFO] Tracker démarré sur le port 9000 (max 100 peers, 500 fichiers, pool 4 threads)
+[2026-04-10 04:49:11] [INFO] Connexion: 127.0.0.1
+[2026-04-10 04:49:11] [DEBUG] 127.0.0.1 >> announce listen 12345 seed [file1 1000 100 hash1] leech [hash2]
+[2026-04-10 04:49:11] [INFO] Announce: 127.0.0.1:12345 — 1 seed(s), 1 leech(es)
+[2026-04-10 04:49:12] [INFO] Déconnexion inattendue: 127.0.0.1:12345
+[2026-04-10 04:49:12] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 04:49:13] [INFO] Connexion: 127.0.0.1
+[2026-04-10 04:49:13] [DEBUG] 127.0.0.1 >> look
+[2026-04-10 04:49:14] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 04:49:15] [INFO] Connexion: 127.0.0.1
+[2026-04-10 04:49:15] [DEBUG] 127.0.0.1 >> getfile hash1
+[2026-04-10 04:49:16] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 04:49:17] [INFO] Connexion: 127.0.0.1
+[2026-04-10 04:49:17] [DEBUG] 127.0.0.1 >> bye
+[2026-04-10 04:49:17] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 04:51:09] [INFO] Thread pool initialisé: 4 threads, queue 50
+[2026-04-10 04:51:09] [INFO] Tracker démarré sur le port 9000 (max 100 peers, 500 fichiers, pool 4 threads)
+[2026-04-10 04:51:12] [INFO] Connexion: 127.0.0.1
+[2026-04-10 04:51:12] [DEBUG] 127.0.0.1 >> announce listen 12345 seed [file1 1000 100 hash1] leech [hash2]
+[2026-04-10 04:51:12] [INFO] Announce: 127.0.0.1:12345 — 1 seed(s), 1 leech(es)
+[2026-04-10 04:51:13] [INFO] Déconnexion inattendue: 127.0.0.1:12345
+[2026-04-10 04:51:13] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 04:51:14] [INFO] Connexion: 127.0.0.1
+[2026-04-10 04:51:14] [DEBUG] 127.0.0.1 >> look
+[2026-04-10 04:51:15] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 04:51:16] [INFO] Connexion: 127.0.0.1
+[2026-04-10 04:51:16] [DEBUG] 127.0.0.1 >> getfile hash1
+[2026-04-10 04:51:17] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 04:51:18] [INFO] Connexion: 127.0.0.1
+[2026-04-10 04:51:18] [DEBUG] 127.0.0.1 >> bye
+[2026-04-10 04:51:18] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 04:51:37] [INFO] Thread pool initialisé: 4 threads, queue 50
+[2026-04-10 04:51:37] [INFO] Tracker démarré sur le port 9000 (max 100 peers, 500 fichiers, pool 4 threads)
+[2026-04-10 04:51:40] [INFO] Connexion: 127.0.0.1
+[2026-04-10 04:51:40] [DEBUG] 127.0.0.1 >> announce listen 12345 seed [file1 1000 100 hash1] leech [hash2]
+[2026-04-10 04:51:40] [INFO] Announce: 127.0.0.1:12345 — 1 seed(s), 1 leech(es)
+[2026-04-10 04:51:41] [INFO] Déconnexion inattendue: 127.0.0.1:12345
+[2026-04-10 04:51:41] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 04:51:42] [INFO] Connexion: 127.0.0.1
+[2026-04-10 04:51:42] [DEBUG] 127.0.0.1 >> look
+[2026-04-10 04:51:43] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 04:51:44] [INFO] Connexion: 127.0.0.1
+[2026-04-10 04:51:44] [DEBUG] 127.0.0.1 >> getfile hash1
+[2026-04-10 04:51:45] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 04:51:46] [INFO] Connexion: 127.0.0.1
+[2026-04-10 04:51:46] [DEBUG] 127.0.0.1 >> bye
+[2026-04-10 04:51:46] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 05:13:58] [INFO] Thread pool initialisé: 4 threads, queue 50
+[2026-04-10 05:13:58] [INFO] Tracker démarré sur le port 9000 (max 100 peers, 500 fichiers, pool 4 threads)
+[2026-04-10 05:14:01] [INFO] Connexion: 127.0.0.1
+[2026-04-10 05:14:01] [DEBUG] 127.0.0.1 >> announce listen 12345 seed [file1 1000 100 hash1] leech [hash2]
+[2026-04-10 05:14:01] [INFO] Announce: 127.0.0.1:12345 — 1 seed(s), 1 leech(es)
+[2026-04-10 05:14:02] [INFO] Déconnexion inattendue: 127.0.0.1:12345
+[2026-04-10 05:14:02] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 05:14:03] [INFO] Connexion: 127.0.0.1
+[2026-04-10 05:14:03] [DEBUG] 127.0.0.1 >> look
+[2026-04-10 05:14:04] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 05:14:05] [INFO] Connexion: 127.0.0.1
+[2026-04-10 05:14:05] [DEBUG] 127.0.0.1 >> getfile hash1
+[2026-04-10 05:14:06] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 05:14:07] [INFO] Connexion: 127.0.0.1
+[2026-04-10 05:14:07] [DEBUG] 127.0.0.1 >> update seed [hash1] leech [hash2]
+[2026-04-10 05:14:08] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 05:14:09] [INFO] Connexion: 127.0.0.1
+[2026-04-10 05:14:09] [DEBUG] 127.0.0.1 >> bye
+[2026-04-10 05:14:09] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 05:14:45] [INFO] Thread pool initialisé: 4 threads, queue 50
+[2026-04-10 05:14:45] [INFO] Tracker démarré sur le port 9000 (max 100 peers, 500 fichiers, pool 4 threads)
+[2026-04-10 05:14:48] [INFO] Connexion: 127.0.0.1
+[2026-04-10 05:14:48] [DEBUG] 127.0.0.1 >> announce listen 12345 seed [file1 1000 100 hash1] leech [hash2]
+[2026-04-10 05:14:48] [INFO] Announce: 127.0.0.1:12345 — 1 seed(s), 1 leech(es)
+[2026-04-10 05:14:49] [INFO] Déconnexion inattendue: 127.0.0.1:12345
+[2026-04-10 05:14:49] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 05:14:50] [INFO] Connexion: 127.0.0.1
+[2026-04-10 05:14:50] [DEBUG] 127.0.0.1 >> look
+[2026-04-10 05:14:51] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 05:14:52] [INFO] Connexion: 127.0.0.1
+[2026-04-10 05:14:52] [DEBUG] 127.0.0.1 >> getfile hash1
+[2026-04-10 05:14:53] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 05:14:54] [INFO] Connexion: 127.0.0.1
+[2026-04-10 05:14:54] [DEBUG] 127.0.0.1 >> update seed [hash1] leech [hash2]
+[2026-04-10 05:14:55] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 05:14:56] [INFO] Connexion: 127.0.0.1
+[2026-04-10 05:14:56] [DEBUG] 127.0.0.1 >> bye
+[2026-04-10 05:14:56] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 05:22:43] [INFO] Thread pool initialisé: 4 threads, queue 50
+[2026-04-10 05:22:43] [INFO] Tracker démarré sur le port 9000 (max 100 peers, 500 fichiers, pool 4 threads)
+[2026-04-10 05:22:50] [INFO] Connexion: 127.0.0.1
+[2026-04-10 05:22:50] [DEBUG] 127.0.0.1 >> announce listen 2000 seed [toto 234 4 ajs;eoifjo;aseifj] leech []
+[2026-04-10 05:22:50] [INFO] Announce: 127.0.0.1:2000 — 1 seed(s), 0 leech(es)
+[2026-04-10 05:22:50] [DEBUG] 127.0.0.1 >> getfile ajs;eoifjo;aseifj
+[2026-04-10 05:22:50] [DEBUG] 127.0.0.1 >> bye
+[2026-04-10 05:22:50] [INFO] Bye: 127.0.0.1:2000
+[2026-04-10 05:22:50] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 05:22:52] [INFO] Connexion: 127.0.0.1
+[2026-04-10 05:22:52] [DEBUG] 127.0.0.1 >> announce listen 2050 seed [myfile.dat 1048576 1024 e2d0fe1577e7aff00007e19ebdc04143] leech []
+[2026-04-10 05:22:52] [INFO] Announce: 127.0.0.1:2050 — 1 seed(s), 0 leech(es)
+[2026-04-10 05:22:53] [INFO] Déconnexion inattendue: 127.0.0.1:2050
+[2026-04-10 05:22:53] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 05:22:54] [INFO] Connexion: 127.0.0.1
+[2026-04-10 05:22:54] [DEBUG] 127.0.0.1 >> look [filename=myfile.dat]
+[2026-04-10 05:22:55] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 05:22:56] [INFO] Connexion: 127.0.0.1
+[2026-04-10 05:22:56] [DEBUG] 127.0.0.1 >> getfile e2d0fe1577e7aff00007e19ebdc04143
+[2026-04-10 05:22:57] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 05:22:58] [INFO] Connexion: 127.0.0.1
+[2026-04-10 05:22:58] [INFO] Connexion: 127.0.0.1
+[2026-04-10 05:22:58] [DEBUG] 127.0.0.1 >> announce listen 2050 seed [myfile.dat 1048576 1024 e2d0fe1577e7aff00007e19ebdc04143]
+[2026-04-10 05:22:58] [INFO] Announce: 127.0.0.1:2050 — 1 seed(s), 0 leech(es)
+[2026-04-10 05:22:58] [INFO] Déconnexion inattendue: 127.0.0.1:2050
+[2026-04-10 05:22:58] [INFO] Fin connexion: 127.0.0.1
+[2026-04-10 05:23:00] [DEBUG] 127.0.0.1 >> update seed [e2d0fe1577e7aff00007e19ebdc04143] leech []
+[2026-04-10 05:23:01] [INFO] Fin connexion: 127.0.0.1

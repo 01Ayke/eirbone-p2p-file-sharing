@@ -1,0 +1,373 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[top=2cm, bottom=2cm, left=2.2cm, right=2.2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{array}
+\usepackage{colortbl}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{tabularx}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{lmodern}
+\usepackage{parskip}
+\usepackage{titlesec}
+\usepackage{lastpage}
+
+\tcbuselibrary{skins, breakable}
+
+% ─── Couleurs ────────────────────────────────────────────────────────────────
+\definecolor{darkblue}{RGB}{20,60,120}
+\definecolor{darkgreen}{RGB}{30,130,50}
+\definecolor{darkorange}{RGB}{200,100,0}
+\definecolor{darkred}{RGB}{160,30,30}
+\definecolor{lightgray}{RGB}{248,248,248}
+\definecolor{bordergray}{RGB}{210,210,210}
+\definecolor{lightblue}{RGB}{232,242,255}
+\definecolor{lightgreen}{RGB}{232,248,235}
+\definecolor{lightorange}{RGB}{255,243,224}
+\definecolor{lightred}{RGB}{255,235,235}
+
+% ─── Titres ──────────────────────────────────────────────────────────────────
+\titleformat{\section}{\large\bfseries\color{darkblue}}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{darkblue!80}}{}{0em}{}
+\titleformat{\subsubsection}{\normalsize\itshape\color{darkblue!60}}{}{0em}{}
+\titlespacing{\section}{0pt}{10pt}{4pt}
+\titlespacing{\subsection}{0pt}{7pt}{2pt}
+
+% ─── Listings ────────────────────────────────────────────────────────────────
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{darkblue}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{darkred},
+    breaklines=true,
+    showstringspaces=false,
+    frame=single,
+    rulecolor=\color{bordergray},
+    backgroundcolor=\color{lightgray},
+    tabsize=2,
+    xleftmargin=4pt, xrightmargin=4pt,
+    aboveskip=4pt, belowskip=4pt
+}
+
+% ─── Boîtes ──────────────────────────────────────────────────────────────────
+\newtcolorbox{infobox}[2][]{
+    colback=#2!8, colframe=#2!60!black,
+    fonttitle=\bfseries\small, title={#1},
+    left=5pt, right=5pt, top=3pt, bottom=3pt,
+    boxrule=0.6pt
+}
+
+% ─── En-têtes ────────────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small\textcolor{darkblue}{\textbf{Eirbone P2P}}}
+\rhead{\small\textcolor{darkblue}{Rapport d'état du projet}}
+\cfoot{\small Page~\thepage~/~\pageref{LastPage}}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ─── Commandes utiles ────────────────────────────────────────────────────────
+\newcommand{\ok}{\textcolor{darkgreen}{\textbf{OK}}}
+\newcommand{\partial}{\textcolor{darkorange}{\textbf{Partiel}}}
+\newcommand{\missing}{\textcolor{darkred}{\textbf{Absent}}}
+\newcommand{\coche}{\textcolor{darkgreen}{$\checkmark$}}
+\newcommand{\croix}{\textcolor{darkred}{$\times$}}
+
+\hypersetup{colorlinks=true, linkcolor=darkblue, urlcolor=darkblue}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{document}
+
+% ── PAGE DE TITRE ─────────────────────────────────────────────────────────────
+\begin{titlepage}
+\centering
+\vspace*{1.5cm}
+
+\vspace{1.8cm}
+
+\begin{tcolorbox}[colback=lightblue, colframe=darkblue, width=0.78\textwidth,
+                  title={ }, fonttitle=\bfseries]
+\centering
+\title{\LARGE\bfseries\color{darkblue} Rapport Eirbone :\\[0.2cm]\vspace*{0.5cm}
+\large Application d'échange de gros fichiers\\ en Pair-à-Pair (P2P)\\[0.5cm]\vspace*{2.5cm}
+\normalsize\normalfont ENSEIRB-MATMECA -- 2\ieme année Informatique\\[0.2cm]\vspace*{0.5cm}
+Équipe :\\ Adam El Mouedden,\\ Aymane Kechna\\ \& Pierre-Louis Shrestha-Salie}
+\date{}
+\maketitle
+\end{tcolorbox}
+
+
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ── 1. INTRODUCTION ───────────────────────────────────────────────────────────
+\section{Introduction}
+
+\subsection{Présentation du projet}
+
+Eirbone est un système de partage de fichiers de type BitTorrent simplifié.
+Les fichiers sont découpés en pièces de 1\,024~octets, identifiés par leur
+empreinte MD5, et échangés via un protocole textuel TCP (messages terminés
+par \texttt{\textbackslash n}, listes encadrées par \texttt{[ ]}).
+
+L'architecture repose sur deux composants principaux :
+\begin{itemize}[nosep]
+    \item \textbf{Tracker (C)} : serveur centralisé qui maintient la liste
+          des fichiers disponibles et des pairs qui les possèdent.
+    \item \textbf{Peer (Java)} : client capable d'annoncer ses fichiers au
+          Tracker, d'en découvrir d'autres, et d'échanger directement des
+          pièces avec ses pairs.
+\end{itemize}
+
+\subsection{Architecture générale}
+
+\begin{center}
+\begin{tcolorbox}[colback=lightgray, colframe=bordergray, width=0.88\textwidth]
+\begin{lstlisting}[language={}]
++------------------------------------------+
+|  TRACKER (C)  --  port TCP 9000          |
+|  Thread pool 4 workers, max 100 peers    |
++------------------------------------------+
+        |  announce / look / getfile        |
++---------------+             +---------------+
+|  PEER A (Java)|             |  PEER B (Java)|
+|  TCPServer    |             |  TCPServer    |
++---------------+             +---------------+
+        |       communication directe        |
+        +------------------------------------+
+          interested / have / getpieces / data
+\end{lstlisting}
+\end{tcolorbox}
+\end{center}
+
+% ── 2. TRACKER ────────────────────────────────────────────────────────────────
+\section{Tracker --- Implémentation en C}
+
+\subsection{Structures de données}
+
+Deux structures définies dans \texttt{tracker\_state.h} constituent la base
+mémoire, partagée entre les threads et protégée par un mutex
+(\texttt{storage\_lock()} / \texttt{storage\_unlock()}) :
+
+\begin{lstlisting}[language=C]
+typedef struct {
+    char ip[INET_ADDRSTRLEN]; int listen_port; int connected;
+    char seeded_keys[100][MAX_KEY]; int seed_count;
+    char leeched_keys[100][MAX_KEY]; int leech_count;
+    time_t last_seen;
+} Peer;
+
+typedef struct {
+    char filename[MAX_FILENAME]; long length; int piece_size;
+    char key[MAX_KEY];
+    char owners[MAX_PEERS_PER_FILE][64]; int owner_count;
+} FileEntry;
+\end{lstlisting}
+
+\subsection{Serveur TCP et thread pool}
+
+Le serveur écoute sur le port configuré (défaut~: 9000).
+Un \textbf{thread pool} évite la création d'un thread par connexion :
+4~workers consomment une file d'attente circulaire de 50~tâches,
+synchronisée par mutex et variable condition.
+Les paramètres sont externalisés dans \texttt{config.ini}
+(port, \texttt{max\_peers}~=~100, \texttt{max\_files}~=~500,
+taille du pool, niveau de log).
+
+\subsection{Protocole Tracker-Peer --- cinq commandes}
+
+\begin{description}[leftmargin=0pt, labelindent=0pt]
+\item[\texttt{announce listen <port> seed [...] leech [...]}]
+      Crée ou met à jour le pair, enregistre chaque fichier seed dans
+      \texttt{FileEntry}, ajoute le pair à \texttt{owners}. Réponse~: \texttt{ok}.
+
+\item[\texttt{look [filename=nom]}]
+      Parcourt tous les \texttt{FileEntry} et retourne la liste filtrée.
+      Seul le critère \texttt{filename=} est supporté
+      (\texttt{filesize>}/\texttt{filesize<} non implémentés).
+
+\item[\texttt{getfile <hash>}]
+      Localise un fichier par sa clé MD5 et retourne la liste
+      \texttt{owners}. Réponse~: \texttt{peers <hash> [ip:port ...]}.
+
+\item[\texttt{update seed [...] leech [...]}]
+      Retire le pair de ses anciens fichiers seed, reconstruit ses listes.
+      Réponse~: \texttt{ok}.
+
+\item[\texttt{bye}]
+      Retire le pair de tous les owners, le marque hors-ligne,
+      ferme la connexion. Réponse~: \texttt{bye}.
+\end{description}
+
+% ── 3. TESTS TRACKER ──────────────────────────────────────────────────────────
+\section{Tests et validation du Tracker}
+
+\subsection{Résultats des tests}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{clll}
+\toprule
+\textbf{N°} & \textbf{Commande} & \textbf{Réponse obtenue} & \textbf{Statut} \\
+\midrule
+1 & \texttt{announce listen 12345 seed [...] leech []} & \texttt{ok}                              & \textcolor{darkgreen}{\textbf{PASS}} \\
+2 & \texttt{look []}                                   & \texttt{list [file1 1000 100 hash1]}      & \textcolor{darkgreen}{\textbf{PASS}} \\
+3 & \texttt{getfile hash1}                             & \texttt{peers hash1 [127.0.0.1:12345]}    & \textcolor{darkgreen}{\textbf{PASS}} \\
+4 & \texttt{update seed [hash1] leech []}              & \texttt{ok}                               & \textcolor{darkgreen}{\textbf{PASS}} \\
+5 & \texttt{bye}                                       & \texttt{bye}                              & \textcolor{darkgreen}{\textbf{PASS}} \\
+\midrule
+\multicolumn{3}{r}{\textbf{Taux de réussite}} & \textcolor{darkgreen}{\textbf{5/5 --- 100\%}} \\
+\bottomrule
+\end{tabular}
+\caption{Tests manuels du Tracker (via \texttt{nc localhost 9000})}
+\end{table}
+
+
+
+\subsection{Fonctionnalités opérationnelles et manquantes}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lc@{\hspace{1.5cm}}lc}
+\toprule
+\textbf{Fonctionnalité} & \textbf{État} & \textbf{Fonctionnalité} & \textbf{État} \\
+\midrule
+Announce seed / leech     & \textcolor{darkgreen}{\coche} OK & Critère \texttt{filesize>} dans look & \textcolor{darkred}{\croix} Absent \\
+Look sans filtre          & \textcolor{darkgreen}{\coche} OK & Critère \texttt{filesize<} dans look & \textcolor{darkred}{\croix} Absent \\
+Look avec \texttt{filename=} & \textcolor{darkgreen}{\coche} OK & Validation MD5 des clés         & \textcolor{darkred}{\croix} Absent \\
+Getfile                   & \textcolor{darkgreen}{\coche} OK & Timeout automatique des pairs    & \textcolor{darkred}{\croix} Absent \\
+Update                    & \textcolor{darkgreen}{\coche} OK & Persistance disque               & \textcolor{darkred}{\croix} Absent \\
+Bye, Thread pool, Logging & \textcolor{darkgreen}{\coche} OK & & \\
+\bottomrule
+\end{tabular}
+\caption{Bilan des fonctionnalités du Tracker}
+\end{table}
+
+% ── 4. PEER JAVA ──────────────────────────────────────────────────────────────
+\section{Peer --- Implémentation en Java}
+
+\subsection{Architecture}
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{0.88\textwidth}{llX}
+\toprule
+\textbf{Paquetage} & \textbf{Classe} & \textbf{Rôle} \\
+\midrule
+\texttt{client} & \texttt{TrackerClient}   & Communication TCP avec le Tracker \\
+\texttt{server} & \texttt{TCPServer}       & Serveur local pour connexions P2P entrantes \\
+\texttt{peer}   & \texttt{PeerClient}      & Connexions P2P sortantes \\
+\texttt{peer}   & \texttt{DownloadManager} & Orchestration des téléchargements \\
+\texttt{utils}  & \texttt{FileManager}     & Création, lecture, calcul MD5 \\
+\texttt{utils}  & \texttt{FileInfos}       & Métadonnées (nom, taille, hash) \\
+\bottomrule
+\end{tabularx}
+\caption{Architecture du Peer Java}
+\end{table}
+
+\subsection{Tests d'intégration}
+
+\textbf{App.java} valide le flux complet Peer-Tracker :
+
+\begin{lstlisting}[language=bash]
+[FileManager] Fichier cree: ./shared/ajs;eoifjo;aseifj.dat (234 octets)
+[TCPServer] Started on port 2000
+[TrackerClient] Connecte a localhost:9000
+Peers for ajs;eoifjo;aseifj => [127.0.0.1:2000]
+[TCPServer] Stopped  --  BUILD SUCCESS
+\end{lstlisting}
+
+\textbf{QuickTest.java} valide les composants unitaires :
+
+\begin{lstlisting}[language=bash]
+1. FileManager  -> File key: b730e8b9f04e3ed3...  OK  |  File size: 234 bytes  OK
+2. TrackerClient -> Connexion OK  |  Annonce OK
+3. Peer Discovery -> Peers found  OK
+4. TCPServer (port 6666) -> start OK  |  addFile OK  |  stop OK
+=== All Core Components Working ===
+\end{lstlisting}
+
+\subsection{État d'avancement}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Fonctionnalité} & \textbf{Tracker} & \textbf{Peer} \\
+\midrule
+Announce / Look / Getfile / Update / Bye & \textcolor{darkgreen}{\coche} & \textcolor{darkgreen}{\coche} \\
+\midrule
+\texttt{interested} / \texttt{have}      & N/A & \textcolor{darkorange}{Partiel} \\
+\texttt{getpieces} / \texttt{data}       & N/A & \textcolor{darkred}{\croix~Absent} \\
+BufferMap Base64                          & N/A & \textcolor{darkorange}{Partiel} \\
+Téléchargement multi-sources             & N/A & \textcolor{darkred}{\croix~Absent} \\
+\bottomrule
+\end{tabular}
+\caption{État d'avancement global}
+\end{table}
+
+% ── 5. COMMUNICATION P2P ──────────────────────────────────────────────────────
+\section{Communication Pair-à-Pair}
+
+\subsection{Protocole attendu}
+
+\begin{center}
+\begin{tcolorbox}[colback=lightgray, colframe=bordergray, width=0.82\textwidth]
+\begin{lstlisting}[language={}]
+Peer B (Leech)                      Peer A (Seed)
+     |--- interested <hash> ----------->|
+     |<-- have <hash> <buffermap_b64> --|
+     |--- getpieces <hash> [0 1 3] ---->|
+     |<-- data <hash> [0 1024 ...]      |
+     |    <octets binaires>             |
+\end{lstlisting}
+\end{tcolorbox}
+\end{center}
+
+Le buffermap encode en bits la possession des pièces, puis en Base64
+pour la transmission textuelle
+(ex.~: 8~pièces, pièces 0,2,3 possédées $\Rightarrow$ bits \texttt{10110000}
+$\Rightarrow$ \texttt{tAA=}).
+Le message \texttt{data} combine un en-tête texte et une charge binaire
+brute (pas d'encodage supplémentaire).
+
+\subsection{État et travail restant}
+
+\begin{itemize}[nosep]
+    \item \texttt{interested} / \texttt{have} : classes présentes,
+          appels à valider en conditions réelles.
+    \item \texttt{getpieces} : classe présente, tests incomplets.
+    \item \texttt{data} : transfert binaire à implémenter.
+    \item Buffermap Base64 : encodage/décodage à valider.
+    \item Téléchargement multi-sources et gestion des déconnexions :
+          non implémentés.
+\end{itemize}
+
+% ── 6. CONCLUSION ─────────────────────────────────────────────────────────────
+\section{Conclusion et perspectives}
+
+Le Tracker est fonctionnel. 
+La communication Peer-Tracker est validée.
+Il reste à implémenter correctement la logique de la couche P2P.
+
+
+
+\textbf{Travail qui reste à faire}
+\begin{enumerate}[nosep]
+    \item Valider \texttt{TestP2P.java} complet, buffermap Base64 et message framing
+    \item Implémenter \texttt{getpieces()} et le transfert binaire \texttt{data}
+    \item Ajouter robustesse réseau : timeouts, retry, déconnexions
+    \item Packaging, tests finaux et livraison
+\end{enumerate}
+
+\end{document}
