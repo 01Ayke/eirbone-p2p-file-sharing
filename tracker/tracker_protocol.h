@@ -10,8 +10,8 @@
  */
 typedef struct {
     char client_ip[INET_ADDRSTRLEN];
-    int  listen_port;   /* port d'écoute P2P du peer (défini à l'announce) */
-    Peer *peer;         /* NULL tant que le peer n'a pas fait announce      */
+    int  listen_port;
+    Peer *peer;
 } ClientContext;
 
 void parse_seed_list_and_register(Peer *peer, const char *ip, const char *seed_content);

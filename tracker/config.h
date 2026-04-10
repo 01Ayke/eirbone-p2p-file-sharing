@@ -7,6 +7,8 @@ typedef struct {
     int max_files;
     int timeout;
     int backlog;
+    int thread_pool_size;
+    int thread_pool_queue;
     char log_level[32];
     char log_file[256];
 } Config;

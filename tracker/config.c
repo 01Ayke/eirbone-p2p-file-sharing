@@ -3,6 +3,7 @@
 #include <string.h>
 #include "config.h"
 
+// retire les \n et \r à la fin d'une chaîne
 void trim_newline(char *s) {
     size_t n = strlen(s);
     while (n > 0 && (s[n - 1] == '\n' || s[n - 1] == '\r')) {
@@ -11,6 +12,7 @@ void trim_newline(char *s) {
     }
 }
 
+// retire les espaces inutiles
 void trim_spaces(char *s) {
     char *start = s;
     while (*start == ' ' || *start == '\t') {
@@ -32,12 +34,15 @@ void trim_spaces(char *s) {
     }
 }
 
+// charge la configuration depuis un fichier INI simple (sera config.ini)
 void set_default_config(Config *cfg) {
     cfg->tracker_port = 9000;
     cfg->max_peers = 100;
     cfg->max_files = 500;
     cfg->timeout = 30;
     cfg->backlog = 10;
+    cfg->thread_pool_size = 4;
+    cfg->thread_pool_queue = 50;
     strcpy(cfg->log_level, "info");
     strcpy(cfg->log_file, "tracker.log");
 }
@@ -101,6 +106,10 @@ int load_config(const char *filename, Config *cfg) {
                 cfg->timeout = atoi(value);
             } else if (strcmp(key, "backlog") == 0) {
                 cfg->backlog = atoi(value);
+            } else if (strcmp(key, "thread_pool_size") == 0) {
+                cfg->thread_pool_size = atoi(value);
+            } else if (strcmp(key, "thread_pool_queue") == 0) {
+                cfg->thread_pool_queue = atoi(value);
             }
         } else if (strcmp(section, "log") == 0) {
             if (strcmp(key, "level") == 0) {

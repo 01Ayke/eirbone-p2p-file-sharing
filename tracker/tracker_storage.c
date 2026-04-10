@@ -30,11 +30,7 @@ Peer *find_or_create_peer(const char *ip, int listen_port) {
             return &peers[i];
         }
     }
-
-    if (peer_count >= peers_capacity) {
-        return NULL;
-    }
-
+    if (peer_count >= peers_capacity) return NULL;
     Peer *p = &peers[peer_count++];
     memset(p, 0, sizeof(Peer));
     strncpy(p->ip, ip, sizeof(p->ip) - 1);
@@ -74,14 +70,8 @@ FileEntry *find_file_by_key(const char *key) {
 
 FileEntry *find_or_create_file(const char *filename, long length, int piece_size, const char *key) {
     FileEntry *f = find_file_by_key(key);
-    if (f) {
-        return f;
-    }
-
-    if (file_count >= files_capacity) {
-        return NULL;
-    }
-
+    if (f) return f;
+    if (file_count >= files_capacity) return NULL;
     f = &files[file_count++];
     memset(f, 0, sizeof(FileEntry));
     strncpy(f->filename, filename, MAX_FILENAME - 1);

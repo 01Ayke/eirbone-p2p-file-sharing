@@ -12,19 +12,6 @@
 #include "tracker_protocol.h"
 #include "tracker_utils.h"
 
-/* Arguments passés au thread client */
-typedef struct {
-    int                client_fd;
-    struct sockaddr_in client_addr;
-} ThreadArgs;
-
-static void *client_thread(void *arg) {
-    ThreadArgs *ta = (ThreadArgs *)arg;
-    handle_client(ta->client_fd, &ta->client_addr);
-    free(ta);
-    return NULL;
-}
-
 int main(void) {
     Config cfg;
     set_default_config(&cfg);
@@ -47,10 +34,13 @@ int main(void) {
         free(files);
         return 1;
     }
-
+    
     memset(peers, 0, sizeof(Peer) * (size_t)peers_capacity);
     memset(files, 0, sizeof(FileEntry) * (size_t)files_capacity);
 
+    // initialiser le thread pool
+    ThreadPool pool;
+    thread_pool_init(&pool, cfg.thread_pool_size, cfg.thread_pool_queue);
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd < 0) {
         perror("socket");
@@ -70,9 +60,9 @@ int main(void) {
 
     struct sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
-    server_addr.sin_family      = AF_INET;
+    server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
-    server_addr.sin_port        = htons((uint16_t)cfg.tracker_port);
+    server_addr.sin_port = htons((uint16_t)cfg.tracker_port);
 
     if (bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
         perror("bind");
@@ -90,8 +80,8 @@ int main(void) {
         return 1;
     }
 
-    log_message("INFO", "Tracker démarré sur le port %d (max %d peers, %d fichiers)",
-                cfg.tracker_port, cfg.max_peers, cfg.max_files);
+    log_message("INFO", "Tracker démarré sur le port %d (max %d peers, %d fichiers, pool %d threads)",
+                cfg.tracker_port, cfg.max_peers, cfg.max_files, cfg.thread_pool_size);
 
     while (1) {
         struct sockaddr_in client_addr;
@@ -102,27 +92,17 @@ int main(void) {
             perror("accept");
             continue;
         }
-
-        ThreadArgs *ta = malloc(sizeof(ThreadArgs));
-        if (!ta) {
-            log_message("ERROR", "malloc échoué pour ThreadArgs");
-            close(client_fd);
-            continue;
-        }
-
-        ta->client_fd   = client_fd;
-        ta->client_addr = client_addr;
-
-        pthread_t tid;
-        if (pthread_create(&tid, NULL, client_thread, ta) != 0) {
-            perror("pthread_create");
+        // ajouter la tâche au pool de threads
+        if (thread_pool_add_task(&pool, client_fd, &client_addr) != 0) {
+            log_message("WARN", "Queue pleine, connexion rejetée");
             close(client_fd);
             free(ta);
             continue;
         }
         pthread_detach(tid);
     }
-
+    
+    thread_pool_destroy(&pool);
     close(server_fd);
     free(peers);
     free(files);
