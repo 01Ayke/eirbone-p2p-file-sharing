@@ -16,7 +16,7 @@ sleep 1
 
 # Lancer le tracker en arrière-plan
 echo "[*] Démarrage du tracker..."
-./tracker/install/tracker > tracker_test.log 2>&1 &
+./tracker/install/tracker > >(tee tracker_test.log) 2>&1 &
 TRACKER_PID=$!
 sleep 3
 
@@ -66,8 +66,20 @@ else
 fi
 echo ""
 
-# Test 4: bye
-echo "Test 4: bye"
+# Test 4: update
+echo "Test 4: update"
+echo "---"
+(echo 'update seed [hash1] leech [hash2]'; sleep 1) | nc -q 1 localhost 9000 2>/dev/null
+RESULT=$?
+if [ $RESULT -eq 0 ]; then
+    echo -e "${GREEN}[OK] update envoyé${NC}"
+else
+    echo -e "${RED}[ERREUR] update échoué${NC}"
+fi
+echo ""
+
+# Test 5: bye
+echo "Test 5: bye"
 echo "---"
 (echo 'bye'; sleep 1) | nc -q 1 localhost 9000 2>/dev/null
 RESULT=$?
