@@ -2,3 +2,8 @@ peer/target
 tracker/compile_commands.json
 tracker/build/
 tracker/install/
+rapport/*
+!rapport/*.tex
+!rapport/*.bib
+!rapport/*.sh
+
