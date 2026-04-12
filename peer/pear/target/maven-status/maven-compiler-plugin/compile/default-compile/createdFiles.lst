@@ -1,0 +1,12 @@
+org/eirb/eirbone/peer/PeerClient.class
+org/eirb/eirbone/download/DownloadManager.class
+org/eirb/eirbone/tracker/TrackerClient.class
+org/eirb/eirbone/cli/CLI.class
+org/eirb/eirbone/Main.class
+org/eirb/eirbone/storage/FileManager.class
+org/eirb/eirbone/peer/PeerServer.class
+org/eirb/eirbone/tracker/TrackerClient$PeerAddress.class
+org/eirb/eirbone/config/Config.class
+org/eirb/eirbone/download/Manifest.class
+org/eirb/eirbone/storage/FileManager$FileInfo.class
+org/eirb/eirbone/peer/Buffermap.class
