@@ -6,13 +6,48 @@ import org.eirb.eirbone.storage.FileManager;
 import org.eirb.eirbone.tracker.TrackerClient;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DownloadManager {
+
+    public static class DownloadTask {
+        public final String id;
+        public final String filename;
+        public final String md5;
+        public final long   totalSize;
+        public final String peerIp;
+        public final int    peerPort;
+        public volatile int    downloadedPieces;
+        public volatile int    totalPieces;
+        public volatile String status;       // queued | downloading | done | error
+        public volatile String errorMessage;
+        public final long startTime;
+
+        public DownloadTask(String id, String filename, String md5, long totalSize,
+                            String peerIp, int peerPort) {
+            this.id           = id;
+            this.filename     = filename;
+            this.md5          = md5;
+            this.totalSize    = totalSize;
+            this.peerIp       = peerIp;
+            this.peerPort     = peerPort;
+            this.totalPieces  = (int) Math.ceil((double) totalSize / 1024);
+            this.status       = "queued";
+            this.startTime    = System.currentTimeMillis();
+        }
+
+        public double progressPercent() {
+            if (totalPieces == 0) return status.equals("done") ? 100.0 : 0.0;
+            return 100.0 * downloadedPieces / totalPieces;
+        }
+    }
 
     private final Config        config;
     private final TrackerClient tracker;
     private final FileManager   fileManager;
+
+    private final Map<String, DownloadTask> tasks = new ConcurrentHashMap<>();
 
     public DownloadManager(Config config, TrackerClient tracker, FileManager fileManager) {
         this.config      = config;
@@ -20,71 +55,89 @@ public class DownloadManager {
         this.fileManager = fileManager;
     }
 
-    // lance le téléchargement d'un fichier identifié par son nom
+    // CLI: download by filename â€” auto-selects first available peer
     public void download(String filename) {
-        // on lance le téléchargement dans un thread séparé pour ne pas
-        // bloquer la CLI pendant le transfert
         new Thread(() -> {
             try {
-                doDownload(filename);
+                doAutoDownload(filename);
             } catch (Exception e) {
-                System.err.println("[ERROR] Téléchargement échoué : " + e.getMessage());
+                System.err.println("[ERROR] TÃ©lÃ©chargement Ã©chouÃ© : " + e.getMessage());
             }
         }, "download-" + filename).start();
     }
 
-    private void doDownload(String filename) throws IOException {
-        System.out.println("[INFO] Recherche de " + filename + " sur le tracker...");
+    // Web API: download with a specific peer already chosen
+    public String downloadWithPeer(String filename, String md5, long size,
+                                   String peerIp, int peerPort) {
+        String taskId = UUID.randomUUID().toString();
+        DownloadTask task = new DownloadTask(taskId, filename, md5, size, peerIp, peerPort);
+        tasks.put(taskId, task);
+        new Thread(() -> executeTask(task), "dl-" + filename).start();
+        return taskId;
+    }
 
-        // look
+    public Collection<DownloadTask> getTasks() {
+        return tasks.values();
+    }
+
+    // -------------------------------------------------------------------------
+
+    private void doAutoDownload(String filename) throws IOException {
+        System.out.println("[INFO] Recherche de " + filename + " sur le tracker...");
         String lookResponse = tracker.look(filename);
-        String md5    = parseMd5FromLookResponse(lookResponse, filename);
-        long   length = parseLengthFromLookResponse(lookResponse, filename);
+        String md5    = parseMd5(lookResponse, filename);
+        long   length = parseLength(lookResponse, filename);
         if (md5 == null) {
-            System.err.println("[ERROR] Fichier introuvable sur le réseau : " + filename);
+            System.err.println("[ERROR] Fichier introuvable : " + filename);
             return;
         }
-        System.out.println("[INFO] Fichier trouvé : md5=" + md5 + " taille=" + length + " octets");
-
-        // getfile
         List<TrackerClient.PeerAddress> peers = tracker.getFile(md5);
         if (peers.isEmpty()) {
             System.err.println("[ERROR] Aucun peer disponible pour " + filename);
             return;
         }
-        System.out.println("[INFO] " + peers.size() + " peer(s) disponible(s) : " + peers);
-        
-        // se connecter au premier peer et télécharger
         TrackerClient.PeerAddress peer = peers.get(0);
-        PeerClient client = new PeerClient(config, fileManager);
-        client.downloadFrom(peer.ip, peer.port, filename, md5, length);
-        System.out.println("[INFO] Téléchargement terminé : " + filename);
+        String taskId = downloadWithPeer(filename, md5, length, peer.ip, peer.port);
+        System.out.println("[INFO] TÃ¢che dÃ©marrÃ©e : " + taskId);
     }
 
-    // extrait le MD5 depuis "list [nom taille psize md5]"
-    private String parseMd5FromLookResponse(String response, String filename) {
+    private void executeTask(DownloadTask task) {
+        task.status = "downloading";
+        try {
+            PeerClient client = new PeerClient(config, fileManager);
+            client.downloadFrom(task.peerIp, task.peerPort, task.filename, task.md5,
+                    task.totalSize, (done, total) -> {
+                        task.downloadedPieces = done;
+                        task.totalPieces      = total;
+                    });
+            task.downloadedPieces = task.totalPieces;
+            task.status = "done";
+            System.out.println("[INFO] TÃ©lÃ©chargement terminÃ© : " + task.filename);
+        } catch (Exception e) {
+            task.status       = "error";
+            task.errorMessage = e.getMessage();
+            System.err.println("[ERROR] TÃ©lÃ©chargement Ã©chouÃ© (" + task.filename + ") : " + e.getMessage());
+        }
+    }
+
+    private String parseMd5(String response, String filename) {
+        String[] t = extractTokens(response, filename);
+        return t != null ? t[3] : null;
+    }
+
+    private long parseLength(String response, String filename) {
+        String[] t = extractTokens(response, filename);
+        if (t == null) return 0;
+        try { return Long.parseLong(t[1]); } catch (NumberFormatException e) { return 0; }
+    }
+
+    private String[] extractTokens(String response, String filename) {
         if (response == null || !response.startsWith("list [")) return null;
         int start = response.indexOf('[') + 1;
         int end   = response.indexOf(']');
         if (start >= end) return null;
         String[] tokens = response.substring(start, end).trim().split(" ");
-        if (tokens.length >= 4 && tokens[0].equals(filename)) {
-            return tokens[3];
-        }
+        if (tokens.length >= 4 && tokens[0].equals(filename)) return tokens;
         return null;
-    }
-
-    // extrait la taille depuis "list [nom taille psize md5]"
-    private long parseLengthFromLookResponse(String response, String filename) {
-        if (response == null || !response.startsWith("list [")) return 0;
-        int start = response.indexOf('[') + 1;
-        int end = response.indexOf(']');
-        if (start >= end) return 0;
-
-        String[] tokens = response.substring(start, end).trim().split(" ");
-        if (tokens.length >= 4 && tokens[0].equals(filename)) {
-            return Long.parseLong(tokens[1]);
-        }
-        return 0;
     }
 }

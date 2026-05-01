@@ -1,6 +1,8 @@
 package org.eirb.eirbone.storage;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -10,7 +12,7 @@ public class FileManager {
 
     private final String sharedDir;
 
-    // utile pour stocker les infos d'un fichier partagé (nom, taille, hash)
+    // utile pour stocker les infos d'un fichier partagÃ© (nom, taille, hash)
     public static class FileInfo {
         public String filename;
         public long   length;
@@ -25,7 +27,7 @@ public class FileManager {
 
     public FileManager(String sharedDir) {
         this.sharedDir = sharedDir;
-        // crée le répertoire s'il n'existe pas
+        // crÃ©e le rÃ©pertoire s'il n'existe pas
         new File(sharedDir).mkdirs();
     }
 
@@ -58,7 +60,7 @@ public class FileManager {
                     md.update(buf, 0, n);
                 }
             }
-            // Convertit le tableau d'octets en chaîne hexadécimale
+            // Convertit le tableau d'octets en chaÃ®ne hexadÃ©cimale
             StringBuilder sb = new StringBuilder();
             for (byte b : md.digest()) {
                 sb.append(String.format("%02x", b));
@@ -71,20 +73,20 @@ public class FileManager {
         }
     }
 
-    // Lit une pièce d'un fichier (index commence à 0)
-    // Retourne toujours 1024 octets (bourré de zéros si dernière pièce)
+    // Lit une piÃ¨ce d'un fichier (index commence Ã  0)
+    // Retourne toujours 1024 octets (bourrÃ© de zÃ©ros si derniÃ¨re piÃ¨ce)
     public byte[] readPiece(String filename, int pieceIndex) throws IOException {
         File f = new File(sharedDir, filename);
         byte[] piece = new byte[1024];
 
         try (RandomAccessFile raf = new RandomAccessFile(f, "r")) {
             raf.seek((long) pieceIndex * 1024);
-            raf.read(piece); // si fin de fichier, le reste reste à 0
+            raf.read(piece); // si fin de fichier, le reste reste Ã  0
         }
         return piece;
     }
 
-    // Écrit une pièce dans un fichier en cours de téléchargement
+    // Ã‰crit une piÃ¨ce dans un fichier en cours de tÃ©lÃ©chargement
     public void writePiece(String filename, int pieceIndex, byte[] data) throws IOException {
         File f = new File(sharedDir, filename);
         try (RandomAccessFile raf = new RandomAccessFile(f, "rw")) {
@@ -93,11 +95,21 @@ public class FileManager {
         }
     }
 
-    // Tronque le fichier à sa vraie taille (retire le bourrage de la dernière pièce)
+    // Tronque le fichier Ã  sa vraie taille (retire le bourrage de la derniÃ¨re piÃ¨ce)
     public void truncate(String filename, long realLength) throws IOException {
         File f = new File(sharedDir, filename);
         try (RandomAccessFile raf = new RandomAccessFile(f, "rw")) {
             raf.setLength(realLength);
+        }
+    }
+
+    // Renomme le fichier temporaire (identifiÃ© par hash) vers son vrai nom
+    public void renameAfterDownload(String md5, String filename) throws IOException {
+        File src = new File(sharedDir, md5);
+        File dst = new File(sharedDir, filename);
+        if (!src.renameTo(dst)) {
+            Files.copy(src.toPath(), dst.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            src.delete();
         }
     }
 

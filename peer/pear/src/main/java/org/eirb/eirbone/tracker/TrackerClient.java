@@ -6,14 +6,15 @@ import org.eirb.eirbone.storage.FileManager;
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class TrackerClient {
 
     private final Config      config;
     private final FileManager fileManager;
 
-    // La socket TCP reste ouverte pendant toute la durée de vie du peer
     private Socket         socket;
     private BufferedReader reader;
     private PrintWriter    writer;
@@ -23,20 +24,23 @@ public class TrackerClient {
         this.fileManager = fileManager;
     }
 
-    // connecte le client au tracker en TCP et initialise reader/writer
     public void connect() throws IOException {
-        socket = new Socket(config.trackerAddress, config.trackerPort);        
+        socket = new Socket(config.trackerAddress, config.trackerPort);
         reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
-        System.out.println("[INFO] Connecté au tracker " + config.trackerAddress + ":" + config.trackerPort);    
+        connected = true;
+        System.out.println("[INFO] ConnectÃ© au tracker " + config.trackerAddress + ":" + config.trackerPort);
     }
 
-    // announce listen <port> seed [...] leech []
-    public void announce() throws IOException {
-        List<FileManager.FileInfo> files = fileManager.listSharedFiles();
+    private volatile boolean connected = false;
 
+    public boolean isConnected() { return connected; }
+
+    public synchronized void announce() throws IOException {
+        if (!connected) throw new IOException("Non connectÃ© au tracker");
+        List<FileManager.FileInfo> files = fileManager.listSharedFiles();
         StringBuilder sb = new StringBuilder();
-        sb.append("announce listen ").append(config.peerPort);        
+        sb.append("announce listen ").append(config.peerPort);
         sb.append(" seed [");
         for (int i = 0; i < files.size(); i++) {
             if (i > 0) sb.append(" ");
@@ -46,16 +50,15 @@ public class TrackerClient {
         String msg = sb.toString();
         System.out.println("[DEBUG] >> " + msg);
         writer.println(msg);
-
-        String response = reader.readLine(); // bloque jusqu'à recevoir "ok"
+        String response = reader.readLine();
         System.out.println("[DEBUG] << " + response);
         if (!"ok".equals(response)) {
-            throw new IOException("Announce refusé par le tracker : " + response);
+            throw new IOException("Announce refusÃ© par le tracker : " + response);
         }
-        System.out.println("[INFO] Announce OK — " + files.size() + " fichier(s) partagé(s)");
+        System.out.println("[INFO] Announce OK â€” " + files.size() + " fichier(s) partagÃ©(s)");
     }
 
-    // Représente un peer retourné par getfile
+    // ReprÃ©sente un peer retournÃ© par getfile
     public static class PeerAddress {
         public String ip;
         public int    port;
@@ -68,9 +71,16 @@ public class TrackerClient {
         @Override public String toString() { return ip + ":" + port; }
     }
 
-    // look [filename=<name>]
-    // retourne la liste des fichiers
-    public String look(String filename) throws IOException {
+    // ReprÃ©sente un fichier retournÃ© par look
+    public static class NetworkFile {
+        public String filename;
+        public long   size;
+        public int    pieceSize;
+        public String md5;
+    }
+
+    public synchronized String look(String filename) throws IOException {
+        if (!connected) throw new IOException("Non connectÃ© au tracker");
         String msg = "look [filename=" + filename + "]";
         writer.println(msg);
         System.out.println("[DEBUG] >> " + msg);
@@ -79,9 +89,39 @@ public class TrackerClient {
         return response;
     }
 
-    // getfile <md5>
-    // retourne la liste des peers qui ont ce fichier
-    public List<PeerAddress> getFile(String md5) throws IOException {
+    // look et parse â€” retourne une liste de fichiers disponibles sur le rÃ©seau
+    public List<NetworkFile> lookFiles(String search) throws IOException {
+        String response = look(search);
+        return parseNetworkFiles(response);
+    }
+
+    private List<NetworkFile> parseNetworkFiles(String response) {
+        List<NetworkFile> files = new ArrayList<>();
+        Set<String> seenMd5 = new HashSet<>();
+        if (response == null || !response.startsWith("list [")) return files;
+        int start = response.indexOf('[') + 1;
+        int end   = response.lastIndexOf(']');
+        if (start >= end) return files;
+        String inner = response.substring(start, end).trim();
+        if (inner.isEmpty()) return files;
+        String[] tokens = inner.split(" ");
+        for (int i = 0; i + 3 < tokens.length; i += 4) {
+            NetworkFile f = new NetworkFile();
+            f.filename  = tokens[i];
+            try {
+                f.size      = Long.parseLong(tokens[i + 1]);
+                f.pieceSize = Integer.parseInt(tokens[i + 2]);
+            } catch (NumberFormatException ignored) { continue; }
+            f.md5 = tokens[i + 3];
+            if (seenMd5.add(f.md5)) {
+                files.add(f);
+            }
+        }
+        return files;
+    }
+
+    public synchronized List<PeerAddress> getFile(String md5) throws IOException {
+        if (!connected) throw new IOException("Non connectÃ© au tracker");
         String msg = "getfile " + md5;
         writer.println(msg);
         System.out.println("[DEBUG] >> " + msg);
@@ -92,19 +132,19 @@ public class TrackerClient {
         int start = response.indexOf('[');
         int end   = response.indexOf(']');
         if (start == -1 || end == -1 || end <= start + 1) return peers;
-
         String res = response.substring(start + 1, end).trim();
         if (res.isEmpty()) return peers;
         for (String token : res.split(" ")) {
             String[] parts = token.split(":");
             if (parts.length == 2) {
-                peers.add(new PeerAddress(parts[0], Integer.parseInt(parts[1])));
+                try {
+                    peers.add(new PeerAddress(parts[0], Integer.parseInt(parts[1])));
+                } catch (NumberFormatException ignored) {}
             }
         }
         return peers;
     }
 
-    // update seed [...] leech [...]
     public synchronized void update(List<String> seedKeys, List<String> leechKeys) throws IOException {
         StringBuilder sb = new StringBuilder("update seed [");
         for (int i = 0; i < seedKeys.size(); i++) {
@@ -117,23 +157,23 @@ public class TrackerClient {
             sb.append(leechKeys.get(i));
         }
         sb.append("]");
-
         writer.println(sb.toString());
         String response = reader.readLine();
         if (!"ok".equals(response)) {
-            System.err.println("[WARN] Update tracker : réponse inattendue : " + response);
+            System.err.println("[WARN] Update tracker : rÃ©ponse inattendue : " + response);
         }
     }
 
-    // bye
-    public void bye() {
+    public synchronized void bye() {
+        if (!connected) return;
         try {
             writer.println("bye");
-            reader.readLine(); // attend "bye" en retour
+            reader.readLine();
         } catch (Exception e) {}
     }
 
     public void disconnect() {
-        try { socket.close(); } catch (Exception e) {}
+        connected = false;
+        try { if (socket != null) socket.close(); } catch (Exception e) {}
     }
 }
