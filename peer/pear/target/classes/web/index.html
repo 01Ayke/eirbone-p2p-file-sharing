@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EirboneP2P</title>
+<style>
+:root {
+  --bg:           #0d1117;
+  --surface:      #161b22;
+  --card:         #21262d;
+  --card-hover:   #2d333b;
+  --border:       #30363d;
+  --border-light: #444c56;
+  --accent:       #7c85f3;
+  --accent-dark:  #4a54c2;
+  --accent-glow:  rgba(124,133,243,.2);
+  --text:         #cdd9e5;
+  --text-muted:   #768390;
+  --text-dim:     #444c56;
+  --success:      #3fb950;
+  --warning:      #d29922;
+  --error:        #f85149;
+  --info:         #58a6ff;
+  --radius:       10px;
+  --radius-sm:    6px;
+  --shadow:       0 4px 24px rgba(0,0,0,.4);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── Header ────────────────────────────────────────────── */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.logo-icon {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 0 2px rgba(63,185,80,.2);
+}
+
+/* ── Tabs ───────────────────────────────────────────────── */
+nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  gap: 2px;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: 14px 18px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  transition: color .15s, border-color .15s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.tab-badge {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-size: 11px;
+  color: var(--text-muted);
+  min-width: 22px;
+  text-align: center;
+}
+
+.tab-btn.active .tab-badge {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── Main layout ────────────────────────────────────────── */
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 24px;
+}
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ── Search bar ─────────────────────────────────────────── */
+.search-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.search-wrap {
+  flex: 1;
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+input[type="text"] {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px 9px 36px;
+  font-size: 14px;
+  transition: border-color .15s, box-shadow .15s;
+  outline: none;
+}
+
+input[type="text"]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+input[type="text"]::placeholder { color: var(--text-muted); }
+
+/* ── Buttons ────────────────────────────────────────────── */
+.btn {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all .15s;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { background: #9099f8; }
+.btn-primary:active { transform: translateY(1px); }
+
+.btn-secondary {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--card-hover); border-color: var(--border-light); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+}
+.btn-ghost:hover { color: var(--text); background: var(--card); border-color: var(--border); }
+
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-icon { padding: 8px; }
+.btn:disabled { opacity: .45; cursor: not-allowed; pointer-events: none; }
+
+/* ── Section header ─────────────────────────────────────── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.section-count {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ── File grid ──────────────────────────────────────────── */
+.file-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+}
+
+.file-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.file-card:hover {
+  border-color: var(--border-light);
+  box-shadow: var(--shadow);
+}
+
+.file-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.file-icon {
+  width: 38px; height: 38px;
+  border-radius: 8px;
+  background: var(--accent-glow);
+  border: 1px solid rgba(124,133,243,.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.file-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  word-break: break-word;
+  margin-bottom: 3px;
+}
+
+.file-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.file-hash {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 3px 7px;
+  letter-spacing: .3px;
+}
+
+.file-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Empty state ────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 64px 24px;
+  color: var(--text-muted);
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 14px;
+  opacity: .4;
+}
+
+.empty-state h3 {
+  font-size: 16px;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.empty-state p { font-size: 13px; }
+
+/* ── Downloads list ─────────────────────────────────────── */
+.dl-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dl-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  transition: border-color .15s;
+}
+
+.dl-card:hover { border-color: var(--border-light); }
+
+.dl-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  gap: 12px;
+}
+
+.dl-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dl-percent {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.dl-bar-wrap {
+  background: var(--bg);
+  border-radius: 4px;
+  height: 5px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.dl-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width .4s ease;
+}
+
+.dl-bar.downloading { background: linear-gradient(90deg, var(--accent), #a78bfa); }
+.dl-bar.done        { background: var(--success); }
+.dl-bar.error       { background: var(--error); }
+.dl-bar.queued      { background: var(--text-dim); }
+
+.dl-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+  gap: 12px;
+}
+
+.dl-peer { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px; }
+
+/* ── Status badge ───────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+
+.badge.queued      { background: rgba(68,76,86,.4);  color: var(--text-muted); border: 1px solid var(--border); }
+.badge.downloading { background: rgba(124,133,243,.15); color: var(--accent); border: 1px solid rgba(124,133,243,.3); }
+.badge.done        { background: rgba(63,185,80,.15); color: var(--success); border: 1px solid rgba(63,185,80,.3); }
+.badge.error       { background: rgba(248,81,73,.15); color: var(--error); border: 1px solid rgba(248,81,73,.3); }
+
+/* ── Shared files table ─────────────────────────────────── */
+.table-wrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  background: var(--surface);
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  border-bottom: 1px solid var(--border);
+}
+
+td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,.02); }
+
+.mono { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px; }
+
+/* ── Modal ──────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.65);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 999;
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+}
+
+.modal-overlay.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 24px 80px rgba(0,0,0,.6);
+  transform: translateY(16px);
+  transition: transform .2s;
+}
+
+.modal-overlay.visible .modal { transform: translateY(0); }
+
+.modal-header {
+  padding: 20px 24px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: color .15s, background .15s;
+}
+.modal-close:hover { color: var(--text); background: var(--card); }
+
+.modal-body { padding: 16px 24px; }
+.modal-footer { padding: 0 24px 20px; display: flex; gap: 8px; justify-content: flex-end; }
+
+.modal-file-info {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.modal-file-info .fn { font-weight: 600; margin-bottom: 4px; }
+.modal-file-info .fd { font-size: 12px; color: var(--text-muted); }
+
+.peer-list { display: flex; flex-direction: column; gap: 8px; }
+
+.peer-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  user-select: none;
+}
+
+.peer-option:hover { border-color: var(--border-light); background: var(--card-hover); }
+.peer-option.selected { border-color: var(--accent); background: var(--accent-glow); }
+
+.peer-radio {
+  width: 16px; height: 16px;
+  border: 2px solid var(--border-light);
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color .15s;
+}
+
+.peer-option.selected .peer-radio {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.peer-option.selected .peer-radio::after {
+  content: '';
+  width: 6px; height: 6px;
+  background: #fff;
+  border-radius: 50%;
+}
+
+.peer-addr {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.peer-tag {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 6px;
+  margin-left: auto;
+}
+
+.peer-option.selected .peer-tag {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── Toast ──────────────────────────────────────────────── */
+#toast-area {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  display: flex; flex-direction: column; gap: 8px;
+  z-index: 9999;
+  max-width: 360px;
+}
+
+.toast {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 13px;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  animation: slideIn .2s ease;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.toast.success { border-left: 3px solid var(--success); }
+.toast.error   { border-left: 3px solid var(--error); }
+.toast.info    { border-left: 3px solid var(--info); }
+
+@keyframes slideIn {
+  from { transform: translateX(40px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+/* ── Loader ─────────────────────────────────────────────── */
+.spinner {
+  width: 16px; height: 16px;
+  border: 2px solid rgba(124,133,243,.3);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Utilities ──────────────────────────────────────────── */
+.hidden { display: none !important; }
+.flex   { display: flex; align-items: center; }
+.gap-8  { gap: 8px; }
+.grow   { flex: 1; }
+.right  { text-align: right; }
+.muted  { color: var(--text-muted); }
+.small  { font-size: 12px; }
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 640px) {
+  main { padding: 16px 12px; }
+  .file-grid { grid-template-columns: 1fr; }
+  header { padding: 0 12px; }
+  nav { padding: 0 12px; }
+  .tab-btn { padding: 12px 12px; font-size: 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────── -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">⬡</div>
+    EirboneP2P
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="status-pill" id="status-pill">
+      <div class="status-dot" id="status-dot" style="background:var(--text-dim)"></div>
+      <span id="status-text">Connexion…</span>
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="openTrackerModal()" title="Connecter au tracker">
+      🔗 Tracker
+    </button>
+  </div>
+</header>
+
+<!-- ── Modal: connexion tracker ────────────────────────── -->
+<div class="modal-overlay" id="tracker-modal-overlay" onclick="if(event.target===this)closeTrackerModal()">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <span class="modal-title">Connecter au tracker</span>
+      <button class="modal-close" onclick="closeTrackerModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:500">Adresse IP du tracker</label>
+          <input type="text" id="tracker-ip" placeholder="192.168.1.5" style="padding-left:12px">
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:500">Port</label>
+          <input type="text" id="tracker-port" placeholder="9000" style="padding-left:12px">
+        </div>
+        <div id="tracker-connect-error" class="hidden" style="font-size:12px;color:var(--error);padding:8px 12px;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:6px"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeTrackerModal()">Annuler</button>
+      <button class="btn btn-primary" id="btn-tracker-connect" onclick="connectTracker()">
+        🔗 Connecter
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Tabs ────────────────────────────────────────────── -->
+<nav>
+  <button class="tab-btn active" data-tab="network" onclick="switchTab('network')">
+    🌐 Réseau
+    <span class="tab-badge" id="badge-network">0</span>
+  </button>
+  <button class="tab-btn" data-tab="shared" onclick="switchTab('shared')">
+    📁 Mes fichiers
+    <span class="tab-badge" id="badge-shared">0</span>
+  </button>
+  <button class="tab-btn" data-tab="downloads" onclick="switchTab('downloads')">
+    ⬇ Téléchargements
+    <span class="tab-badge" id="badge-downloads">0</span>
+  </button>
+</nav>
+
+<!-- ── Main content ────────────────────────────────────── -->
+<main>
+
+  <!-- ─ Tab: Réseau ─────────────────────────────────────── -->
+  <div id="tab-network" class="tab-content active">
+    <div class="search-row">
+      <div class="search-wrap">
+        <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input type="text" id="search-input" placeholder="Rechercher un fichier…" onkeydown="if(event.key==='Enter') searchFiles()">
+      </div>
+      <button class="btn btn-primary" onclick="searchFiles()" id="btn-search">
+        <span id="search-spinner" class="spinner hidden"></span>
+        Rechercher
+      </button>
+      <button class="btn btn-secondary btn-icon" onclick="searchFiles()" title="Actualiser">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+      </button>
+    </div>
+
+    <div id="network-status" class="hidden" style="margin-bottom:16px;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;color:var(--text-muted)"></div>
+
+    <div class="section-header">
+      <span class="section-title">Fichiers disponibles</span>
+      <span class="section-count" id="network-count">—</span>
+    </div>
+
+    <div id="file-grid" class="file-grid">
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <h3>Aucune recherche</h3>
+        <p>Lancez une recherche pour découvrir les fichiers du réseau.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─ Tab: Mes fichiers ───────────────────────────────── -->
+  <div id="tab-shared" class="tab-content">
+    <div class="section-header" style="margin-bottom:16px">
+      <span class="section-title">Fichiers partagés localement</span>
+      <button class="btn btn-ghost btn-sm" onclick="loadShared()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        Actualiser
+      </button>
+    </div>
+    <div id="shared-content">
+      <div class="empty-state"><div class="empty-icon">📂</div><h3>Chargement…</h3></div>
+    </div>
+  </div>
+
+  <!-- ─ Tab: Téléchargements ───────────────────────────── -->
+  <div id="tab-downloads" class="tab-content">
+    <div class="section-header" style="margin-bottom:16px">
+      <span class="section-title">Téléchargements</span>
+      <button class="btn btn-ghost btn-sm" onclick="loadDownloads()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        Actualiser
+      </button>
+    </div>
+    <div id="downloads-content">
+      <div class="empty-state"><div class="empty-icon">📥</div><h3>Aucun téléchargement</h3><p>Les téléchargements en cours et terminés apparaîtront ici.</p></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── Modal: sélection de peer ────────────────────────── -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Choisir un peer source</span>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-file-info" id="modal-file-info">
+        <div class="fn" id="modal-filename">—</div>
+        <div class="fd" id="modal-filesize">—</div>
+      </div>
+      <div id="peers-loading" class="flex gap-8" style="padding:12px 0;color:var(--text-muted);font-size:13px">
+        <span class="spinner"></span> Récupération des peers…
+      </div>
+      <div id="peer-list" class="peer-list hidden"></div>
+      <div id="no-peers" class="empty-state hidden" style="padding:24px 0">
+        <div class="empty-icon" style="font-size:32px">😕</div>
+        <h3>Aucun peer disponible</h3>
+        <p>Ce fichier n'est seedé par aucun peer actif.</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-primary" id="btn-dl-confirm" disabled onclick="confirmDownload()">
+        ⬇ Télécharger
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Toast area ───────────────────────────────────────── -->
+<div id="toast-area"></div>
+
+<script>
+'use strict';
+
+// ── State ──────────────────────────────────────────────────
+let currentFile   = null;  // { filename, md5, size }
+let selectedPeer  = null;  // { ip, port }
+let downloadPoll  = null;
+let localMd5s     = new Set();  // md5 des fichiers déjà possédés localement
+
+// ── Tab switching ──────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === 'tab-' + name));
+  if (name === 'shared')    loadShared();
+  if (name === 'downloads') loadDownloads();
+}
+
+// ── Search network files ───────────────────────────────────
+async function searchFiles() {
+  const q = document.getElementById('search-input').value.trim();
+  const spinner = document.getElementById('search-spinner');
+  const btnSearch = document.getElementById('btn-search');
+  spinner.classList.remove('hidden');
+  btnSearch.disabled = true;
+  setNetStatus('');
+
+  try {
+    const [files, shared] = await Promise.all([
+      api('/api/files?search=' + encodeURIComponent(q)),
+      api('/api/shared').catch(() => [])
+    ]);
+    localMd5s = new Set(shared.map(f => f.md5));
+    renderNetworkFiles(files, q);
+  } catch (e) {
+    setNetStatus('Erreur : ' + e.message, 'error');
+  } finally {
+    spinner.classList.add('hidden');
+    btnSearch.disabled = false;
+  }
+}
+
+function renderNetworkFiles(files, query) {
+  const grid = document.getElementById('file-grid');
+  document.getElementById('network-count').textContent = files.length + ' fichier' + (files.length !== 1 ? 's' : '');
+  document.getElementById('badge-network').textContent = files.length;
+
+  if (!files.length) {
+    grid.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <h3>Aucun résultat</h3>
+      <p>${query ? 'Aucun fichier ne correspond à « ' + escHtml(query) + ' ».' : 'Le réseau ne partage aucun fichier pour le moment.'}</p>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = files.map(f => {
+    const owned = localMd5s.has(f.md5);
+    return `
+    <div class="file-card">
+      <div class="file-card-top">
+        <div class="file-icon">${fileIcon(f.filename)}</div>
+        <div>
+          <div class="file-name">${escHtml(f.filename)}</div>
+          <div class="file-hash">${f.md5.substring(0, 16)}…</div>
+        </div>
+      </div>
+      <div class="file-meta">
+        <span>${fmtSize(f.size)}</span>
+        <span>${Math.ceil(f.size / f.pieceSize)} pièce${Math.ceil(f.size / f.pieceSize) > 1 ? 's' : ''}</span>
+      </div>
+      <div class="file-actions">
+        <button class="btn btn-ghost btn-sm" onclick='openPeerModal(${JSON.stringify(f)}, true)'>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/>
+          </svg>
+          Voir les peers
+        </button>
+        ${owned
+          ? `<span class="badge done" style="cursor:default">✓ Possédé</span>`
+          : `<button class="btn btn-primary btn-sm" onclick='openPeerModal(${JSON.stringify(f)}, false)'>⬇ Télécharger</button>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Peer modal ─────────────────────────────────────────────
+function openPeerModal(file, viewOnly) {
+  currentFile  = { ...file, viewOnly };
+  selectedPeer = null;
+
+  document.getElementById('modal-filename').textContent = file.filename;
+  document.getElementById('modal-filesize').textContent = fmtSize(file.size) + ' · ' + file.md5.substring(0, 12) + '…';
+  document.getElementById('peers-loading').classList.remove('hidden');
+  document.getElementById('peer-list').classList.add('hidden');
+  document.getElementById('no-peers').classList.add('hidden');
+  document.getElementById('btn-dl-confirm').disabled = true;
+  if (viewOnly) {
+    document.getElementById('modal-title') && (document.querySelector('.modal-title').textContent = 'Peers disponibles');
+    document.getElementById('btn-dl-confirm').classList.add('hidden');
+  } else {
+    document.querySelector('.modal-title').textContent = 'Choisir un peer source';
+    document.getElementById('btn-dl-confirm').classList.remove('hidden');
+  }
+
+  document.getElementById('modal-overlay').classList.add('visible');
+  loadPeers(file.md5);
+}
+
+async function loadPeers(md5) {
+  try {
+    const peers = await api('/api/peers?md5=' + encodeURIComponent(md5));
+    document.getElementById('peers-loading').classList.add('hidden');
+
+    if (!peers.length) {
+      document.getElementById('no-peers').classList.remove('hidden');
+      return;
+    }
+
+    const list = document.getElementById('peer-list');
+    list.innerHTML = peers.map((p, i) => `
+      <div class="peer-option${i === 0 ? ' selected' : ''}" onclick="selectPeer(this, '${p.ip}', ${p.port})" data-ip="${p.ip}" data-port="${p.port}">
+        <div class="peer-radio${i === 0 ? ' selected' : ''}"></div>
+        <span class="peer-addr">${p.ip}:${p.port}</span>
+        <span class="peer-tag">${i === 0 ? 'recommandé' : 'peer ' + (i + 1)}</span>
+      </div>
+    `).join('');
+    list.classList.remove('hidden');
+
+    // auto-select first peer
+    if (peers.length > 0) {
+      selectedPeer = peers[0];
+      document.getElementById('btn-dl-confirm').disabled = currentFile.viewOnly;
+    }
+  } catch (e) {
+    document.getElementById('peers-loading').classList.add('hidden');
+    document.getElementById('no-peers').classList.remove('hidden');
+    toast('Erreur peers : ' + e.message, 'error');
+  }
+}
+
+function selectPeer(el, ip, port) {
+  document.querySelectorAll('.peer-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedPeer = { ip, port };
+  document.getElementById('btn-dl-confirm').disabled = false;
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('visible');
+  currentFile  = null;
+  selectedPeer = null;
+}
+
+async function confirmDownload() {
+  if (!currentFile || !selectedPeer) return;
+  const btn = document.getElementById('btn-dl-confirm');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Démarrage…';
+
+  try {
+    const res = await api('/api/download', 'POST', {
+      filename: currentFile.filename,
+      md5:      currentFile.md5,
+      size:     currentFile.size,
+      peerIp:   selectedPeer.ip,
+      peerPort: selectedPeer.port
+    });
+    closeModal();
+    toast('Téléchargement démarré : ' + currentFile.filename, 'success');
+    switchTab('downloads');
+  } catch (e) {
+    toast('Erreur : ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '⬇ Télécharger';
+  }
+}
+
+// ── Shared files ───────────────────────────────────────────
+async function loadShared() {
+  const el = document.getElementById('shared-content');
+  try {
+    const files = await api('/api/shared');
+    localMd5s = new Set(files.map(f => f.md5));
+    document.getElementById('badge-shared').textContent = files.length;
+    if (!files.length) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">📂</div><h3>Dossier vide</h3><p>Placez des fichiers dans le dossier partagé pour les partager sur le réseau.</p></div>`;
+      return;
+    }
+    el.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Fichier</th><th>Taille</th><th>Hash MD5</th></tr></thead>
+      <tbody>${files.map(f => `
+        <tr>
+          <td><span style="margin-right:8px">${fileIcon(f.filename)}</span>${escHtml(f.filename)}</td>
+          <td>${fmtSize(f.size)}</td>
+          <td><span class="mono muted">${f.md5}</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>`;
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Erreur</h3><p>${escHtml(e.message)}</p></div>`;
+  }
+}
+
+// ── Downloads ──────────────────────────────────────────────
+async function loadDownloads() {
+  try {
+    const tasks = await api('/api/downloads');
+    renderDownloads(tasks);
+  } catch (e) {
+    document.getElementById('downloads-content').innerHTML =
+      `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Erreur</h3><p>${escHtml(e.message)}</p></div>`;
+  }
+}
+
+function renderDownloads(tasks) {
+  const el = document.getElementById('downloads-content');
+  document.getElementById('badge-downloads').textContent = tasks.filter(t => t.status !== 'done').length || tasks.length;
+
+  if (!tasks.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📥</div><h3>Aucun téléchargement</h3><p>Les téléchargements en cours et terminés apparaîtront ici.</p></div>`;
+    return;
+  }
+
+  el.innerHTML = `<div class="dl-list">${tasks.map(t => {
+    const pct = parseFloat(t.progress).toFixed(1);
+    const sz  = t.totalSize ? (fmtSize(Math.floor(t.totalSize * t.progress / 100)) + ' / ' + fmtSize(t.totalSize)) : '—';
+    return `<div class="dl-card">
+      <div class="dl-top">
+        <span style="font-size:18px;flex-shrink:0">${fileIcon(t.filename)}</span>
+        <span class="dl-name">${escHtml(t.filename)}</span>
+        <span class="badge ${t.status}">${statusLabel(t.status)}</span>
+        <span class="dl-percent">${pct}%</span>
+      </div>
+      <div class="dl-bar-wrap">
+        <div class="dl-bar ${t.status}" style="width:${pct}%"></div>
+      </div>
+      <div class="dl-info">
+        <span class="dl-peer">📡 ${t.peerIp}:${t.peerPort}</span>
+        <span>${t.status === 'error' ? '<span style="color:var(--error)">' + escHtml(t.error || 'Erreur') + '</span>' : sz}</span>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// ── Status bar ─────────────────────────────────────────────
+async function loadStatus() {
+  try {
+    const s = await api('/api/status');
+    const ok = s.trackerConnected;
+    document.getElementById('status-dot').style.background = ok ? 'var(--success)' : 'var(--warning)';
+    document.getElementById('status-text').textContent = ok
+      ? `Peer :${s.peerPort}  ·  Tracker ${s.trackerAddress}:${s.trackerPort}`
+      : `Peer :${s.peerPort}  ·  Tracker hors ligne`;
+  } catch (e) {
+    document.getElementById('status-dot').style.background = 'var(--error)';
+    document.getElementById('status-text').textContent = 'Serveur web inaccessible';
+  }
+}
+
+// ── Polling ────────────────────────────────────────────────
+function startPolling() {
+  loadStatus();
+  setInterval(loadStatus, 15000);
+  setInterval(() => {
+    api('/api/downloads').then(tasks => {
+      const nbActive = tasks.filter(t => t.status === 'downloading').length;
+      document.getElementById('badge-downloads').textContent = nbActive || tasks.length;
+      if (document.getElementById('tab-downloads').classList.contains('active')) {
+        renderDownloads(tasks);
+      }
+    }).catch(() => {});
+  }, 1500);
+}
+
+// ── Helpers ────────────────────────────────────────────────
+async function api(url, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erreur ' + res.status);
+  return data;
+}
+
+function setNetStatus(msg, type = '') {
+  const el = document.getElementById('network-status');
+  if (!msg) { el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+  el.style.color = type === 'error' ? 'var(--error)' : 'var(--text-muted)';
+  el.textContent = msg;
+}
+
+function toast(msg, type = 'info') {
+  const area = document.getElementById('toast-area');
+  const el   = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  area.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateX(40px)'; el.style.transition = 'all .3s'; setTimeout(() => el.remove(), 300); }, 4000);
+}
+
+function fmtSize(bytes) {
+  if (!bytes) return '0 o';
+  const u = ['o', 'Ko', 'Mo', 'Go'];
+  let i = 0, v = bytes;
+  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+  return v.toFixed(i ? 1 : 0) + ' ' + u[i];
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fileIcon(name) {
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  const map = { pdf:'📄', jpg:'🖼️', jpeg:'🖼️', png:'🖼️', gif:'🖼️', webp:'🖼️', svg:'🖼️',
+    mp4:'🎬', mkv:'🎬', avi:'🎬', mov:'🎬', mp3:'🎵', flac:'🎵', wav:'🎵', ogg:'🎵',
+    zip:'📦', tar:'📦', gz:'📦', rar:'📦', '7z':'📦', py:'🐍', js:'🟨', java:'☕',
+    c:'⚙️', cpp:'⚙️', h:'⚙️', txt:'📝', md:'📝', csv:'📊', json:'📊', xml:'📊' };
+  return map[ext] || '📄';
+}
+
+function statusLabel(s) {
+  return { queued:'En attente', downloading:'Téléchargement', done:'Terminé', error:'Erreur' }[s] || s;
+}
+
+// ── Tracker connect modal ──────────────────────────────────
+async function openTrackerModal() {
+  // pré-remplir avec les valeurs actuelles
+  try {
+    const s = await api('/api/status');
+    document.getElementById('tracker-ip').value   = s.trackerAddress || '';
+    document.getElementById('tracker-port').value = s.trackerPort    || '9000';
+  } catch (_) {}
+  document.getElementById('tracker-connect-error').classList.add('hidden');
+  document.getElementById('tracker-modal-overlay').classList.add('visible');
+  document.getElementById('tracker-ip').focus();
+}
+
+function closeTrackerModal() {
+  document.getElementById('tracker-modal-overlay').classList.remove('visible');
+}
+
+async function connectTracker() {
+  const ip   = document.getElementById('tracker-ip').value.trim();
+  const port = parseInt(document.getElementById('tracker-port').value.trim()) || 9000;
+  const errEl = document.getElementById('tracker-connect-error');
+  const btn   = document.getElementById('btn-tracker-connect');
+
+  if (!ip) { errEl.textContent = 'Entrez une adresse IP.'; errEl.classList.remove('hidden'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Connexion…';
+  errEl.classList.add('hidden');
+
+  try {
+    await api('/api/tracker/connect', 'POST', { address: ip, port });
+    closeTrackerModal();
+    toast('Connecté au tracker ' + ip + ':' + port, 'success');
+    loadStatus();
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🔗 Connecter';
+  }
+}
+
+// ── Init ───────────────────────────────────────────────────
+startPolling();
+searchFiles(); // charge les fichiers au démarrage
+</script>
+</body>
+</html>
