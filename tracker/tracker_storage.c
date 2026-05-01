@@ -129,3 +129,24 @@ void add_leech_key(Peer *p, const char *key) {
         p->leech_count++;
     }
 }
+
+/*
+ * Parcourt files[] et supprime toute entrée dont owner_count == 0.
+ * À appeler sous storage_lock(), après avoir retiré un owner d'un fichier.
+ */
+void purge_orphan_files(void) {
+    int i = 0;
+    while (i < file_count) {
+        if (files[i].owner_count == 0) {
+            /* Décale les entrées suivantes pour combler le trou */
+            for (int j = i; j < file_count - 1; j++) {
+                files[j] = files[j + 1];
+            }
+            memset(&files[file_count - 1], 0, sizeof(FileEntry));
+            file_count--;
+            /* ne pas incrémenter i : la position i contient maintenant l'entrée suivante */
+        } else {
+            i++;
+        }
+    }
+}

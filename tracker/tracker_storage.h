@@ -18,4 +18,7 @@ void clear_peer_keys(Peer *p);
 void add_seed_key(Peer *p, const char *key);
 void add_leech_key(Peer *p, const char *key);
 
+/* Supprime de files[] toute entrée dont owner_count == 0 */
+void purge_orphan_files(void);
+
 #endif

@@ -154,6 +154,8 @@ void handle_announce(int client_fd, const char *line, ClientContext *ctx) {
     if (seed_block[0])  parse_seed_list_and_register(peer, ctx->client_ip, seed_block);
     if (leech_block[0]) parse_key_list(peer, leech_block, 0);
 
+    purge_orphan_files();
+
     storage_unlock();
 
     log_message("INFO", "Announce: %s:%d — %d seed(s), %d leech(es)",
@@ -301,6 +303,8 @@ void handle_update(int client_fd, const char *line, ClientContext *ctx) {
         if (f) add_owner_to_file(f, owner);
     }
 
+    purge_orphan_files();
+
     storage_unlock();
 
     log_message("INFO", "Update: %s — %d seed(s), %d leech(es)",
@@ -325,6 +329,7 @@ void handle_bye(int client_fd, ClientContext *ctx) {
         ctx->peer->connected  = 0;
         ctx->peer->seed_count = 0;
         ctx->peer->leech_count = 0;
+        purge_orphan_files();
         storage_unlock();
 
         log_message("INFO", "Bye: %s", owner);
@@ -377,6 +382,7 @@ void handle_client(int client_fd, struct sockaddr_in *client_addr) {
         ctx.peer->connected   = 0;
         ctx.peer->seed_count  = 0;
         ctx.peer->leech_count = 0;
+        purge_orphan_files();
         storage_unlock();
 
         log_message("INFO", "Déconnexion inattendue: %s", owner);
