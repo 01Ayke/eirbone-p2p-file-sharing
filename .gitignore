@@ -6,4 +6,4 @@ rapport/*
 !rapport/*.tex
 !rapport/*.bib
 !rapport/*.sh
-
+*.class

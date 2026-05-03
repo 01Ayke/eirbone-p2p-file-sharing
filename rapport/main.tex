@@ -123,10 +123,12 @@
 \title{\LARGE\bfseries\color{darkblue} Rapport Eirbone :\\[0.2cm]\vspace*{0.5cm}
 \large Application d'échange de gros fichiers\\ en Pair-à-Pair (P2P)\\[0.5cm]\vspace*{2.5cm}
 \normalsize\normalfont ENSEIRB-MATMECA -- 2\ieme année Informatique\\[0.2cm]\vspace*{0.5cm}
-Équipe :\\ Adam El Mouedden,\\ Aymane Kechna\\ \& Pierre-Louis Shrestha-Salie}
+Équipe :\\ Adam El Mouedden\\ Aymane Kechna\\ Pierre-Louis Shrestha--Salié}
 \date{}
 \maketitle
 \end{tcolorbox}
+Encadrant: Timothé Zorn
+
 
 
 \end{titlepage}
@@ -139,22 +141,15 @@
 
 \subsection{Présentation du projet}
 
-Eirbone est un système de partage de fichiers de type BitTorrent simplifié.
-Les fichiers sont découpés en pièces de 1\,024~octets, identifiés par leur
-empreinte MD5, et échangés via un protocole textuel TCP (messages terminés
-par \texttt{\textbackslash n}, listes encadrées par \texttt{[ ]}).
-
-L'architecture repose sur deux composants principaux :
-\begin{itemize}[nosep]
-    \item \textbf{Tracker (C)} : serveur centralisé qui maintient la liste
-          des fichiers disponibles et des pairs qui les possèdent.
-    \item \textbf{Peer (Java)} : client capable d'annoncer ses fichiers au
-          Tracker, d'en découvrir d'autres, et d'échanger directement des
-          pièces avec ses pairs.
-\end{itemize}
+ Eirbone est un système de partage de fichiers en pair-à-pair. Les échanges de contrôle reposent sur un
+ protocole textuel au-dessus de TCP (messages terminés par \texttt{\textbackslash n}, listes encadrées
+ par \texttt{[ ]}).
 
 \subsection{Architecture générale}
-
+Le système eirbone repose sur sur deux composants principaux :
+\textbf{Tracker (C)} : serveur centralisé qui maintient la liste des fichiers disponibles et des pairs qui les possèdent. \\
+\textbf{Peer (Java)} : client capable d'annoncer ses fichiers au Tracker, d'en découvrir d'autres, et d'échanger directement des
+          pièces avec ses pairs.
 \begin{center}
 \begin{tcolorbox}[colback=lightgray, colframe=bordergray, width=0.88\textwidth]
 \begin{lstlisting}[language={}]
@@ -171,17 +166,23 @@ L'architecture repose sur deux composants principaux :
         +------------------------------------+
           interested / have / getpieces / data
 \end{lstlisting}
+\caption{Architecture du système eirbone}
+\label{archi_eirbone}
 \end{tcolorbox}
 \end{center}
+
+Comme repésenter par la figure \ref{archi_eirbone}, cette architecture en un serveur centralisé permet de simplifier grandement la mise en route
+des peers, en ayant qu'un unique point d'entrée. Tout en gardant une bande passante de transfert 
+hors du tracker, et donc d'éviter une surcharge rapide de ce dernier.
 
 % ── 2. TRACKER ────────────────────────────────────────────────────────────────
 \section{Tracker --- Implémentation en C}
 
 \subsection{Structures de données}
 
-Deux structures définies dans \texttt{tracker\_state.h} constituent la base
-mémoire, partagée entre les threads et protégée par un mutex
-(\texttt{storage\_lock()} / \texttt{storage\_unlock()}) :
+Deux structures définies dans \texttt{tracker\_state.h} constituent la base du système mémoire du tracker:
+Peer et FileEntry.\\
+Ces deux structures permettent de rep
 
 \begin{lstlisting}[language=C]
 typedef struct {
@@ -210,61 +211,90 @@ taille du pool, niveau de log).
 
 \subsection{Protocole Tracker-Peer --- cinq commandes}
 
-\begin{description}[leftmargin=0pt, labelindent=0pt]
-\item[\texttt{announce listen <port> seed [...] leech [...]}]
+\begin{itemize}
+
+\item\texttt{announce listen <port> seed [...] leech [...]}
       Crée ou met à jour le pair, enregistre chaque fichier seed dans
       \texttt{FileEntry}, ajoute le pair à \texttt{owners}. Réponse~: \texttt{ok}.
 
-\item[\texttt{look [filename=nom]}]
+\item\texttt{look [filename=nom]}
       Parcourt tous les \texttt{FileEntry} et retourne la liste filtrée.
       Seul le critère \texttt{filename=} est supporté.
 
-\item[\texttt{getfile <hash>}]
+\item\texttt{getfile <hash>}
       Localise un fichier par sa clé MD5 et retourne la liste
       \texttt{owners}. Réponse~: \texttt{peers <hash> [ip:port ...]}.
 
-\item[\texttt{update seed [...] leech [...]}]
+\item\texttt{update seed [...] leech [...]}
       Retire le pair de ses anciens fichiers seed, reconstruit ses listes.
       Réponse~: \texttt{ok}.
 
-\item[\texttt{bye}]
+\item\texttt{bye}
       Retire le pair de tous les owners, le marque hors-ligne,
       ferme la connexion. Réponse~: \texttt{bye}.
-\end{description}
+\end{itemize}
 
 % ── 3. TESTS TRACKER ──────────────────────────────────────────────────────────
 \section{Tests et validation du Tracker}
 
+\subsection{Organisation des tests}
+
+Les tests sont organisés en quatre fichiers unitaires et un fichier
+d'intégration, tous placés dans \texttt{tracker/test/}.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Fichier} & \textbf{Module testé} \\
+\midrule
+\texttt{test\_tracker\_config.c}   & \texttt{config.c} \\
+\texttt{test\_tracker\_utils.c}    & \texttt{tracker\_utils.c} \\
+\texttt{test\_tracker\_storage.c}  & \texttt{tracker\_storage.c} \\
+\texttt{test\_tracker\_protocol.c} & \texttt{tracker\_protocol.c} \\
+\texttt{test\_integration.c}       & Protocole complet \\
+\bottomrule
+\end{tabular}
+\caption{Organisation de la suite de tests du Tracker}
+\end{table}
+
 \subsection{Méthode de test}
 
-Les tests ont été conduits manuellement avec \texttt{ncat} (Nmap),
-qui permet d'envoyer des commandes texte sur une connexion TCP persistante
-et d'observer les réponses en temps réel, sans interprétation des
-caractères de contrôle :
+Les tests d'intégration utilisent \texttt{socketpair()} pour créer un canal
+de communication bidirectionnel. Un thread exécute \texttt{handle\_client()}
+(le code réel du tracker), tandis que le thread principal envoie les
+commandes et vérifie les réponses. Cela permet de tester le flux complet
+sans lancer de vrai serveur réseau.
 
-\begin{lstlisting}[language=bash]
-ncat 127.0.0.1 9000
-\end{lstlisting}
+Les scénarios validés couvrent :
+\begin{itemize}[nosep]
+    \item Commandes valides : announce, look, getfile, update, bye
+    \item Commandes mal formées et commandes inconnues
+    \item Déconnexion propre et brutale
+    \item Double announce (remplacement des clés)
+    \item Deux seeders pour le même fichier
+    \item Limites de capacité (max peers, max files)
+    \item Concurrence (8 clients simultanés)
+\end{itemize}
 
-\subsection{Résultats des tests}
+\subsection{Résultats}
 
 \begin{table}[H]
 \centering
 \begin{tabular}{clll}
 \toprule
-\textbf{N°} & \textbf{Commande envoyée} & \textbf{Réponse obtenue} & \textbf{Statut} \\
+\textbf{Suite} & \textbf{Tests} & \textbf{Statut} \\
 \midrule
-1 & \texttt{announce listen 12345 seed [...] leech []} & \texttt{ok}                              & \textcolor{darkgreen}{\textbf{PASS}} \\
-2 & \texttt{look []}                                   & \texttt{list [file1 1000 100 hash1]}      & \textcolor{darkgreen}{\textbf{PASS}} \\
-3 & \texttt{look [filename=file1]}                     & \texttt{list [file1 1000 100 hash1]}      & \textcolor{darkgreen}{\textbf{PASS}} \\
-4 & \texttt{getfile hash1}                             & \texttt{peers hash1 [127.0.0.1:12345]}    & \textcolor{darkgreen}{\textbf{PASS}} \\
-5 & \texttt{update seed [hash1] leech []}              & \texttt{ok}                               & \textcolor{darkgreen}{\textbf{PASS}} \\
-6 & \texttt{bye}                                       & \texttt{bye}                              & \textcolor{darkgreen}{\textbf{PASS}} \\
+\texttt{test\_tracker\_config.c}   & 5  & \textcolor{darkgreen}{\textbf{PASS}} \\
+\texttt{test\_tracker\_utils.c}    & 2  & \textcolor{darkgreen}{\textbf{PASS}} \\
+\texttt{test\_tracker\_storage.c}  & 7  & \textcolor{darkgreen}{\textbf{PASS}} \\
+\texttt{test\_tracker\_protocol.c} & 2  & \textcolor{darkgreen}{\textbf{PASS}} \\
+\texttt{test\_integration.c}       & 18 & \textcolor{darkgreen}{\textbf{PASS}} \\
 \midrule
-\multicolumn{3}{r}{\textbf{Taux de réussite}} & \textcolor{darkgreen}{\textbf{6/6 --- 100\,\%}} \\
+\multicolumn{2}{r}{\textbf{Total}} & \textcolor{darkgreen}{\textbf{34/34 --- 100\,\%}} \\
 \bottomrule
 \end{tabular}
-\caption{Tests manuels du Tracker via \texttt{ncat localhost 9000}}
+\caption{Résultats de la suite de tests du Tracker}
 \end{table}
 
 \subsection{Fonctionnalités opérationnelles et manquantes}
@@ -275,43 +305,46 @@ ncat 127.0.0.1 9000
 \toprule
 \textbf{Fonctionnalité} & \textbf{État} & \textbf{Fonctionnalité} & \textbf{État} \\
 \midrule
-Announce seed / leech       & \coche~OK  & Critère \texttt{filesize} dans look & \croix~Absent \\
-Look sans filtre            & \coche~OK  & Validation format des clés MD5      & \croix~Absent \\
-Look avec \texttt{filename=}& \coche~OK  & Timeout automatique des pairs       & \croix~Absent \\
-Getfile                     & \coche~OK  & Persistance disque                  & \croix~Absent \\
-Update                      & \coche~OK  & & \\
-Bye, Thread pool, Logging   & \coche~OK  & & \\
+Announce seed / leech        & \coche~OK & Critère \texttt{filesize} dans look & \croix~Absent \\
+Look sans filtre             & \coche~OK & Validation format des clés MD5      & \croix~Absent \\
+Look avec \texttt{filename=} & \coche~OK & Timeout automatique des pairs       & \croix~Absent \\
+Getfile                      & \coche~OK & Persistance disque                  & \croix~Absent \\
+Update, Bye, Thread pool     & \coche~OK & & \\
+Logging                      & \coche~OK & & \\
 \bottomrule
 \end{tabular}
 \caption{Bilan des fonctionnalités du Tracker}
 \end{table}
 
-% ── 4. PEER JAVA ──────────────────────────────────────────────────────────────
 \section{Peer --- Implémentation en Java}
 
 \subsection{Architecture et découpage en modules}
 
-Le Peer est structuré en six paquetages indépendants, chacun ayant une
+Le Peer est structuré en sept paquetages indépendants, chacun ayant une
 responsabilité unique. Le point d'entrée \texttt{Main.java} instancie les
 modules et lance les threads, sans contenir de logique métier.
+Un \textbf{WebServer} a été ajouté.
 
 \begin{table}[H]
 \centering
-\begin{tabularx}{0.92\textwidth}{llX}
+\begin{tabularx}{0.95\textwidth}{llX}
 \toprule
 \textbf{Paquetage} & \textbf{Classe} & \textbf{Rôle} \\
 \midrule
 \texttt{config}   & \texttt{Config}          & Lecture de \texttt{config.ini}, exposition des paramètres \\
 \texttt{storage}  & \texttt{FileManager}     & Scan du répertoire partagé, calcul MD5, lecture/écriture de pièces \\
 \texttt{tracker}  & \texttt{TrackerClient}   & Connexion TCP persistante au Tracker ; announce, look, getfile, update, bye \\
-\texttt{peer}     & \texttt{PeerServer}      & ServerSocket sur \texttt{peer-port} ; répond à interested et getpieces \\
+\texttt{peer}     & \texttt{PeerServer}      & \texttt{ServerSocket} sur \texttt{peer-port} ; répond à \texttt{interested} et \texttt{getpieces} \\
 \texttt{peer}     & \texttt{PeerClient}      & Connexion sortante vers un peer distant pour télécharger des pièces \\
-\texttt{download} & \texttt{DownloadManager} & Orchestration : interroge le Tracker puis coordonne \texttt{PeerClient} \\
-\texttt{cli}      & \texttt{CLI}             & Boucle de commandes utilisateur (download, list, quit) \\
+\texttt{download} & \texttt{DownloadManager} & Orchestration : interroge le Tracker, coordonne \texttt{PeerClient}, suivi de tâches (\texttt{DownloadTask}) \\
+\texttt{download} & \texttt{Manifest}        & Persistance de l'état de téléchargement (reprise après coupure) \\
+\texttt{cli}      & \texttt{CLI}             & Boucle de commandes utilisateur (\texttt{download}, \texttt{list}, \texttt{quit}) \\
+\texttt{web}      & \texttt{WebServer}       & Interface web de supervision (liste fichiers, lancement téléchargements, suivi progression) \\
 \bottomrule
 \end{tabularx}
 \caption{Modules du Peer Java}
 \end{table}
+
 
 \subsection{Diagramme UML des classes}
 
@@ -320,11 +353,13 @@ Le diagramme ci-dessous présente les relations entre les classes du Peer.
 indiquent une dépendance directe (utilisation ou composition) ;
 les flèches en pointillés indiquent une dépendance optionnelle ou future.
 
-\begin{figure}
+
+
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.8\linewidth]{image.png}
     \caption{Diagramme UML}
-    \label{fig:placeholder}
+    \label{fig:uml}
 \end{figure}
 
 \subsection{Flux de démarrage du Peer}
@@ -334,22 +369,44 @@ Au lancement, \texttt{Main.java} exécute les étapes suivantes dans l'ordre :
 \begin{enumerate}[nosep]
   \item Lecture de \texttt{config.ini} via \texttt{Config}.
   \item Scan du répertoire partagé via \texttt{FileManager}.
+  \item Démarrage du \texttt{WebServer} (accessible même si le tracker est indisponible).
   \item Connexion TCP au Tracker et envoi de \texttt{announce} via \texttt{TrackerClient}.
   \item Lancement de \texttt{PeerServer} dans un thread daemon (écoute des peers entrants).
-  \item Lancement d'un thread de mise à jour périodique (\texttt{update} toutes les N secondes).
-  \item Lancement de \texttt{DownloadManager}.
+  \item Lancement d'un thread de mise à jour périodique (\texttt{announce} toutes les N~secondes).
   \item Entrée dans la boucle CLI.
+  \item À la sortie~: arrêt du \texttt{WebServer}, envoi de \texttt{bye} au tracker.
 \end{enumerate}
+
+\subsection{Interface web --- WebServer}
+ 
+Un \texttt{WebServer} intégré expose
+une interface HTTP de supervision. Il permet de~:
+ 
+\begin{itemize}[nosep]
+  \item Lister les fichiers partagés localement et leur MD5.
+  \item Interroger le tracker (\texttt{look}) et afficher les fichiers disponibles sur le réseau.
+  \item Lancer un téléchargement depuis l'interface, en choisissant le peer source.
+  \item Suivre la progression des téléchargements en cours via \texttt{DownloadTask}
+        (statuts~: \texttt{queued} / \texttt{downloading} / \texttt{done} / \texttt{error},
+        pourcentage, messages d'erreur).
+\end{itemize}
+ 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{image2.png}
+    \caption{Interface d'une peer vierge}
+    \label{fig:web-empty}
+\end{figure}
 
 \subsection{Protocole Peer-Peer implémenté}
 
 \subsubsection{Côté serveur --- \texttt{PeerServer}}
 
 \texttt{PeerServer} ouvre un \texttt{ServerSocket} sur \texttt{peer-port}
-et accepte les connexions dans un pool de 10 threads.
+et accepte les connexions dans un pool de 10~threads.
 Pour chaque connexion, il tourne en boucle \texttt{readLine()} (keep-alive)
-et dispatche les commandes reçues :
-
+et dispatche les commandes reçues~:
+ 
 \begin{center}
 \begin{tcolorbox}[colback=lightgray, colframe=bordergray, width=0.82\textwidth]
 \begin{lstlisting}[language={}]
@@ -363,19 +420,111 @@ Peer distant            PeerServer (nous)
 \end{lstlisting}
 \end{tcolorbox}
 \end{center}
-
-Le buffermap est construit bit par bit : bit $i$ mis à 1 si la pièce $i$
+ 
+Le buffermap est construit bit par bit~: bit $i$ mis à~1 si la pièce~$i$
 est présente. Le vecteur de bits est ensuite encodé en Base64 pour la
 transmission textuelle.
+
 
 \subsubsection{Côté client --- \texttt{PeerClient}}
 
 \texttt{PeerClient} se connecte à l'adresse fournie par \texttt{getfile},
 envoie \texttt{interested}, lit le buffermap de réponse, puis demande
 toutes les pièces manquantes en un seul \texttt{getpieces}.
-La réception des données binaires utilise \texttt{readFully} qui boucle
-jusqu'à avoir exactement 1\,024~octets par pièce, conformément aux
-contraintes de TCP (flux fragmenté).
+La réception utilise \texttt{readFully} qui boucle jusqu'à avoir exactement
+1\,024~octets par pièce, conformément aux contraintes de TCP.
+Le \texttt{DownloadManager} fournit un \texttt{ProgressListener} pour le
+suivi temps réel de la progression.
+
+% ── 5. TESTS PEER ─────────────────────────────────────────────────────────────
+\section{Tests et validation du Peer}
+
+\subsection{Organisation de la suite de tests}
+
+Les tests Java sont organisés avec JUnit~5 et Maven Surefire dans
+\texttt{src/test/java/}, en suivant la même structure de paquetages que
+le code source.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llp{5cm}}
+\toprule
+\textbf{Fichier} & \textbf{Module testé} & \textbf{Vérifications} \\
+\midrule
+\texttt{ConfigTest}                & \texttt{Config}          & Lecture config.ini, valeurs par défaut, alias de ports \\
+\texttt{FileManagerTest}           & \texttt{FileManager}     & Scan MD5, lecture/écriture pièces, padding \\
+\texttt{TrackerClientTest}         & \texttt{TrackerClient}   & Connexion TCP, commandes look/getfile/bye \\
+\texttt{DownloadManagerParserTest} & \texttt{DownloadManager} & Parsing des réponses du tracker \\
+\texttt{DownloadTaskTest}          & \texttt{DownloadTask}    & État, progression, calcul des pièces \\
+\texttt{PeerServerTest}            & \texttt{PeerServer}      & Protocole interested/have/getpieces/data \\
+\texttt{PeerClientTest}            & \texttt{PeerClient}      & Téléchargement avec ProgressListener \\
+\texttt{PeerServerClientIT}        & Intégration P2P           & Transfert bout-en-bout, intégrité MD5 \\
+\bottomrule
+\end{tabular}
+\caption{Suite de tests du Peer Java}
+\end{table}
+\subsection{Méthode de test}
+
+\subsubsection{Tests unitaires}
+
+Les tests unitaires isolent chaque composant~:
+
+\begin{itemize}[nosep]
+    \item \texttt{ConfigTest} et \texttt{FileManagerTest} utilisent
+          \texttt{@TempDir} de JUnit~5 pour créer des fichiers temporaires
+          propres à chaque test, sans dépendance au système de fichiers réel.
+    \item \texttt{TrackerClientTest} démarre un faux tracker en mémoire
+          (un \texttt{ServerSocket} dans un thread daemon) qui parle
+          le même protocole texte que le vrai tracker, sans réseau externe.
+    \item \texttt{DownloadManagerParserTest} accède aux méthodes privées
+          de \texttt{DownloadManager} via réflexion Java pour tester les
+          parseurs du format \texttt{list [...]} indépendamment du reste.
+    \item \texttt{DownloadTaskTest} vérifie l'état initial et le calcul
+          de progression de \texttt{DownloadTask} sans aucune dépendance réseau.
+\end{itemize}
+
+\subsubsection{Tests du protocole Peer-Peer}
+
+\texttt{PeerServerTest} connecte un client brut (lecture octet par octet
+pour éviter que le \texttt{BufferedReader} ne consomme les données binaires)
+au vrai \texttt{PeerServer} et vérifie chaque réponse protocole~:
+en-tête \texttt{have} avec buffermap Base64, en-tête \texttt{data} puis
+charge binaire exacte.
+
+\texttt{PeerClientTest} utilise un faux \texttt{PeerServer} qui envoie
+l'en-tête texte et les données binaires dans deux \texttt{flush()} séparés avec une pause de 20 ms pour éviter que le \texttt{BufferedReader} côté
+client ne consomme les octets de pièces.
+
+\subsubsection{Tests d'intégration end-to-end}
+
+\texttt{PeerServerClientIT} fait tourner le vrai \texttt{PeerServer} et
+le vrai \texttt{PeerClient} dans le même processus, sur un port libre
+alloué dynamiquement (\texttt{ServerSocket(0)}). Les trois scénarios
+couvrent~: un petit fichier $< 1\,024$~octets, plusieurs pièces alignées,
+et une taille non alignée nécessitant le tronquage final.
+
+\subsection{Résultats}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{clc}
+\toprule
+\textbf{Suite} & \textbf{Tests} & \textbf{Statut} \\
+\midrule
+\texttt{ConfigTest}                 &  5 & \textcolor{darkgreen}{\textbf{PASS}} \\
+\texttt{FileManagerTest}            & 10 & \textcolor{darkgreen}{\textbf{PASS}} \\
+\texttt{TrackerClientTest}          &  6 & \textcolor{darkgreen}{\textbf{PASS}} \\
+\texttt{DownloadManagerParserTest}  &  9 & \textcolor{darkgreen}{\textbf{PASS}} \\
+\texttt{DownloadTaskTest}           &  9 & \textcolor{darkgreen}{\textbf{PASS}} \\
+\texttt{PeerServerTest}             &  5 & \textcolor{darkgreen}{\textbf{PASS}} \\
+\texttt{PeerClientTest}             &  3 & \textcolor{darkgreen}{\textbf{PASS}} \\
+\texttt{PeerServerClientIT}         &  3 & \textcolor{darkgreen}{\textbf{PASS}} \\
+\midrule
+\multicolumn{2}{r}{\textbf{Total}} & \textcolor{darkgreen}{\textbf{50/50 --- 100\,\%}} \\
+\bottomrule
+\end{tabular}
+\caption{Résultats des tests du Peer Java}
+\end{table}
 
 \subsection{Test à la main du flux complet}
 
@@ -413,8 +562,8 @@ cd /tmp/pear_b && java -jar eirbone-peer.jar
 \begin{figure}[h]
     \centering
     \caption{Terminal 3}    \vspace{0.2cm}
-    \includegraphics[width=1\linewidth]{image2.png}
-    \label{fig:placeholder}
+    \includegraphics[width=1\linewidth]{image3.png}
+    \label{fig:terminal_leech}
 \end{figure}
 \textbf{Vérification d'intégrité :}
 \begin{lstlisting}[language=bash]
@@ -434,34 +583,37 @@ conforme à l'original.
 \toprule
 \textbf{Fonctionnalité} & \textbf{État} & \textbf{Note} \\
 \midrule
-\texttt{Config} --- lecture \texttt{config.ini}         & \coche~OK      & valeurs par défaut si absent \\
-\texttt{FileManager} --- scan MD5, R/W pièces           & \coche~OK      & \texttt{RandomAccessFile} \\
-\texttt{TrackerClient} --- connexion keep-alive         & \coche~OK      & socket persistante \\
-\texttt{announce} au démarrage                          & \coche~OK      & \\
-\texttt{look} + \texttt{getfile} vers Tracker           & \coche~OK      & \\
-\texttt{update} périodique                              & \coche~OK      & basique (rappelle announce) \\
-\texttt{bye} propre à la sortie                         & \coche~OK      & \\
-\texttt{PeerServer} --- interested + have               & \coche~OK      & buffermap Base64 \\
-\texttt{PeerServer} --- getpieces + data binaire        & \coche~OK      & framing TCP correct \\
-\texttt{PeerClient} --- téléchargement complet          & \coche~OK      & \texttt{readFully} \\
-Tronquage de la dernière pièce (bourrage)               & \coche~OK      & \\
-CLI --- download / list / quit                          & \coche~OK      & \\
+\texttt{Config} --- lecture \texttt{config.ini}           & \coche~OK      & valeurs par défaut si absent \\
+\texttt{FileManager} --- scan MD5, R/W pièces             & \coche~OK      & \texttt{RandomAccessFile} \\
+\texttt{TrackerClient} --- connexion keep-alive           & \coche~OK      & socket persistante \\
+\texttt{announce} au démarrage                            & \coche~OK      & \\
+\texttt{look} + \texttt{getfile} vers Tracker             & \coche~OK      & \\
+\texttt{update} périodique                                & \coche~OK      & rappelle announce \\
+\texttt{bye} propre à la sortie                           & \coche~OK      & \\
+\texttt{PeerServer} --- \texttt{interested} + \texttt{have} & \coche~OK    & buffermap Base64 \\
+\texttt{PeerServer} --- \texttt{getpieces} + data binaire & \coche~OK      & framing TCP correct \\
+\texttt{PeerClient} --- téléchargement complet            & \coche~OK      & \texttt{readFully} \\
+Tronquage de la dernière pièce (bourrage)                 & \coche~OK      & \\
+CLI --- \texttt{download} / \texttt{list} / \texttt{quit} & \coche~OK      & \\
+\texttt{WebServer} --- interface de supervision           & \coche~OK      & \nouveau \\
+\texttt{DownloadManager} --- suivi de tâches             & \coche~OK      & \nouveau \\
 \midrule
-Buffermap réel côté leecher (pièces partielles)         & \croix~Absent  & suppose seeder complet \\
-Téléchargement multi-sources simultané                  & \croix~Absent  & un seul peer utilisé \\
-Manifest (reprise après coupure)                        & \croix~Absent  & fichier vide \\
-Échange \texttt{have} périodique entre peers            & \croix~Absent  & reçu mais ignoré \\
-Robustesse --- panne d'un peer en cours de transfert    & \croix~Absent  & pas de retry \\
+Buffermap réel côté leecher (pièces partielles)           & \croix~Absent  & suppose seeder complet \\
+Téléchargement multi-sources simultané                    & \croix~Absent  & un seul peer utilisé \\
+Manifest (reprise après coupure)                          & \croix~Absent  & classe présente, non fonctionnelle \\
+Échange \texttt{have} périodique entre peers              & \croix~Absent  & reçu mais ignoré \\
+Robustesse --- panne d'un peer en cours de transfert      & \croix~Absent  & pas de retry \\
 \bottomrule
 \end{tabular}
 \caption{Bilan complet des fonctionnalités du Peer Java}
 \end{table}
 
+\newpage
 % ── 5. COMMUNICATION P2P ──────────────────────────────────────────────────────
 \section{Communication Pair-à-Pair}
 
 \subsection{Protocole attendu}
-
+ 
 \begin{center}
 \begin{tcolorbox}[colback=lightgray, colframe=bordergray, width=0.82\textwidth]
 \begin{lstlisting}[language={}]
@@ -474,33 +626,35 @@ Peer B (Leech)                      Peer A (Seed)
 \end{lstlisting}
 \end{tcolorbox}
 \end{center}
-
+ 
 Le buffermap encode en bits la possession des pièces, puis en Base64
 pour la transmission textuelle.
 Le message \texttt{data} combine un en-tête texte terminé par
 \texttt{\textbackslash n} et une charge binaire brute de
 $N \times 1\,024$~octets.
-
+ 
 \subsection{État et travail restant}
-
+ 
 \begin{itemize}[nosep]
     \item \texttt{interested} / \texttt{have} : implémentés et validés.
     \item \texttt{getpieces} / \texttt{data} : implémentés et validés (seeder complet).
-    \item Buffermap leecher : le buffermap reçu dans \texttt{have} est ignoré côté \texttt{PeerClient} ;
-          à implémenter pour les téléchargements multi-sources.
-    \item Téléchargement multi-sources et gestion des déconnexions : non implémentés.
+    \item Buffermap leecher~: le buffermap reçu dans \texttt{have} est ignoré côté
+          \texttt{PeerClient}~; à implémenter pour les téléchargements multi-sources.
+    \item Téléchargement multi-sources et gestion des déconnexions~: non implémentés.
 \end{itemize}
-
+ 
 % ── 6. CONCLUSION ─────────────────────────────────────────────────────────────
 \section{Conclusion et perspectives}
-
-Le Tracker est pleinement fonctionnel et validé par des tests manuels
-avec \texttt{ncat}. La communication Peer-Tracker est opérationnelle
-(announce, look, getfile, update, bye). Le flux P2P de base---un seeder
-vers un leecher---est fonctionnel de bout en bout, avec vérification
-d'intégrité par MD5.
-
-\textbf{Travail restant par ordre de priorité :}
+ 
+Le Tracker est pleinement fonctionnel et validé par 34~tests automatisés
+(4~suites unitaires + 1~intégration via \texttt{socketpair}).
+La communication Peer-Tracker est opérationnelle (announce, look, getfile,
+update, bye). Le flux P2P de base---un seeder vers un leecher---est
+fonctionnel de bout en bout, avec vérification d'intégrité par MD5.
+Un \texttt{WebServer} intégré offre désormais une interface de supervision
+en temps réel des téléchargements.
+ 
+\textbf{Fonctionnalitées non explorées :}
 \begin{enumerate}[nosep]
     \item Décoder le buffermap reçu dans \texttt{have} et n'envoyer
           que les pièces disponibles (\texttt{PeerClient}).
@@ -509,7 +663,9 @@ d'intégrité par MD5.
     \item Implémenter le manifest pour reprendre un téléchargement
           interrompu.
     \item Échange périodique de \texttt{have} entre peers connectés.
-    \item Gestion des pannes : timeout, retry sur un autre peer.
+    \item Gestion des pannes~: timeout, retry sur un autre peer.
 \end{enumerate}
+ 
+
 
 \end{document}

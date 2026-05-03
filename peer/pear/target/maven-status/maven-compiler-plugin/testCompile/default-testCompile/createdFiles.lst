@@ -1,0 +1,9 @@
+org/eirb/eirbone/peer/PeerClientTest.class
+org/eirb/eirbone/peer/PeerServerClientIT.class
+org/eirb/eirbone/tracker/TrackerClientTest.class
+org/eirb/eirbone/tracker/TrackerClientTest$FakeHandler.class
+org/eirb/eirbone/download/DownloadTaskTest.class
+org/eirb/eirbone/download/DownloadManagerParserTest.class
+org/eirb/eirbone/config/ConfigTest.class
+org/eirb/eirbone/peer/PeerServerTest.class
+org/eirb/eirbone/storage/FileManagerTest.class

@@ -142,3 +142,21 @@
 [2026-04-10 05:22:58] [INFO] Fin connexion: 127.0.0.1
 [2026-04-10 05:23:00] [DEBUG] 127.0.0.1 >> update seed [e2d0fe1577e7aff00007e19ebdc04143] leech []
 [2026-04-10 05:23:01] [INFO] Fin connexion: 127.0.0.1
+[2026-05-03 13:13:12] [INFO] Tracker démarré sur le port 9000 (max 100 peers, 500 fichiers)
+[2026-05-03 13:13:15] [INFO] Connexion: 127.0.0.1
+[2026-05-03 13:13:15] [DEBUG] 127.0.0.1 >> announce listen 12345 seed [file1 1000 100 hash1] leech [hash2]
+[2026-05-03 13:13:15] [INFO] Announce: 127.0.0.1:12345 — 1 seed(s), 1 leech(es)
+[2026-05-03 13:13:16] [INFO] Déconnexion inattendue: 127.0.0.1:12345
+[2026-05-03 13:13:16] [INFO] Fin connexion: 127.0.0.1
+[2026-05-03 13:13:17] [INFO] Connexion: 127.0.0.1
+[2026-05-03 13:13:17] [DEBUG] 127.0.0.1 >> look
+[2026-05-03 13:13:18] [INFO] Fin connexion: 127.0.0.1
+[2026-05-03 13:13:19] [INFO] Connexion: 127.0.0.1
+[2026-05-03 13:13:19] [DEBUG] 127.0.0.1 >> getfile hash1
+[2026-05-03 13:13:20] [INFO] Fin connexion: 127.0.0.1
+[2026-05-03 13:13:21] [INFO] Connexion: 127.0.0.1
+[2026-05-03 13:13:21] [DEBUG] 127.0.0.1 >> update seed [hash1] leech [hash2]
+[2026-05-03 13:13:22] [INFO] Fin connexion: 127.0.0.1
+[2026-05-03 13:13:23] [INFO] Connexion: 127.0.0.1
+[2026-05-03 13:13:23] [DEBUG] 127.0.0.1 >> bye
+[2026-05-03 13:13:23] [INFO] Fin connexion: 127.0.0.1
