@@ -13,7 +13,7 @@ public class Main {
     public static void main(String[] args) throws Exception {
 
         Config config = new Config("config.ini");
-        // args: [peer-port] [tracker-ip] [tracker-port]
+        // arguments optionnels : [port-peer] [ip-tracker] [port-tracker]
         if (args.length > 0) config.peerPort        = Integer.parseInt(args[0]);
         if (args.length > 1) config.trackerAddress   = args[1];
         if (args.length > 2) config.trackerPort      = Integer.parseInt(args[2]);
@@ -22,11 +22,11 @@ public class Main {
         TrackerClient tracker = new TrackerClient(config, fileManager);
         DownloadManager downloadManager = new DownloadManager(config, tracker, fileManager);
 
-        // Le serveur web dÃ©marre en premier â€” accessible mÃªme si le tracker est down
+        // Le serveur web démarre en premier — accessible même si le tracker est indisponible
         WebServer webServer = new WebServer(config, tracker, downloadManager, fileManager);
         webServer.start();
 
-        // Connexion au tracker (non-fatale)
+        // Connexion au tracker (non fatale : l'interface web reste accessible)
         try {
             tracker.connect();
             tracker.announce();
@@ -35,13 +35,13 @@ public class Main {
             System.err.println("[WARN] L'interface web est accessible. Relancez le tracker puis reconnectez.");
         }
 
-        // Serveur P2P
+        // Démarrage du serveur P2P en tâche de fond
         PeerServer server = new PeerServer(config, fileManager);
         Thread serverThread = new Thread(server, "peer-server");
         serverThread.setDaemon(true);
         serverThread.start();
 
-        // Annonces pÃ©riodiques au tracker
+        // Annonces périodiques au tracker (toutes les updateIntervalSec secondes)
         Thread updateThread = new Thread(() -> {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
@@ -50,21 +50,23 @@ public class Main {
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 } catch (Exception e) {
-                    System.err.println("[WARN] update Ã©chouÃ© : " + e.getMessage());
+                    System.err.println("[WARN] Mise à jour du tracker échouée : " + e.getMessage());
                 }
             }
         }, "tracker-updater");
         updateThread.setDaemon(true);
         updateThread.start();
 
+        // Boucle CLI — bloque le thread principal jusqu'à la commande "quit"
         CLI cli = new CLI(config, tracker, downloadManager);
         cli.run();
 
+        // Arrêt propre
         webServer.stop();
         if (tracker.isConnected()) {
             tracker.bye();
             tracker.disconnect();
         }
-        System.out.println("[INFO] Peer arrÃªtÃ©.");
+        System.out.println("[INFO] Peer arrêté.");
     }
 }

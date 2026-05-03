@@ -11,9 +11,10 @@ import java.util.concurrent.Executors;
 
 public class PeerServer implements Runnable {
 
-    private final Config      config;
-    private final FileManager fileManager;
-    private final ExecutorService threadPool = Executors.newFixedThreadPool(10);
+    private final Config           config;
+    private final FileManager      fileManager;
+    // Pool de 10 threads pour traiter plusieurs connexions simultanées
+    private final ExecutorService  threadPool = Executors.newFixedThreadPool(10);
 
     public PeerServer(Config config, FileManager fileManager) {
         this.config      = config;
@@ -22,8 +23,8 @@ public class PeerServer implements Runnable {
 
     @Override
     public void run() {
-try (ServerSocket serverSocket = new ServerSocket(config.peerPort)) {
-        System.out.println("[INFO] PeerServer en écoute sur le port " + config.peerPort);
+        try (ServerSocket serverSocket = new ServerSocket(config.peerPort)) {
+            System.out.println("[INFO] PeerServer en écoute sur le port " + config.peerPort);
             while (!Thread.currentThread().isInterrupted()) {
                 Socket clientSocket = serverSocket.accept();
                 threadPool.submit(() -> handlePeer(clientSocket));
@@ -33,7 +34,7 @@ try (ServerSocket serverSocket = new ServerSocket(config.peerPort)) {
         }
     }
 
-    // gère la communication avec un peer connecté
+    // Gère toute la communication avec un peer connecté jusqu'à sa déconnexion
     private void handlePeer(Socket socket) {
         String peerAddr = socket.getInetAddress().getHostAddress() + ":" + socket.getPort();
         System.out.println("[INFO] Peer connecté : " + peerAddr);
@@ -61,42 +62,46 @@ try (ServerSocket serverSocket = new ServerSocket(config.peerPort)) {
         }
     }
 
-    // répond à interested <md5> 
-    // avec have <md5> <buffermap_base64>
+    // Répond à "interested <md5>" par "have <md5> <buffermap_base64>"
+    // Le buffermap indique quelles pièces sont disponibles (tous les bits à 1 si complet)
     private void handleInterested(String line, PrintWriter writer) throws IOException {
         String md5 = line.substring("interested ".length()).trim();
         FileManager.FileInfo fileInfo = findFileByMd5(md5);
         if (fileInfo == null) {
+            // Fichier inconnu : retourne un buffermap vide
             writer.println("have " + md5 + " " + encodedEmptyBuffermap(0));
             return;
         }
         int nbPieces = (int) Math.ceil((double) fileInfo.length / 1024);
-        int nbBytes = (nbPieces + 7) / 8;
+        int nbBytes  = (nbPieces + 7) / 8;
         byte[] buffermap = new byte[nbBytes];
+        // Bit 7 = pièce 0, bit 6 = pièce 1, etc.
         for (int i = 0; i < nbPieces; i++) {
             buffermap[i / 8] |= (byte) (1 << (7 - (i % 8)));
         }
         String encoded = Base64.getEncoder().encodeToString(buffermap);
         writer.println("have " + md5 + " " + encoded);
-        System.out.println("[INFO] Intéressé par " + fileInfo.filename + " → buffermap envoyé (" + nbPieces + " pièces)");
+        System.out.println("[INFO] Intéressé par " + fileInfo.filename
+                           + " → buffermap envoyé (" + nbPieces + " pièces)");
     }
 
-    // réponse à getpieces <md5> [3 5 7]
-    //  avec le header et les données binaires
+    // Répond à "getpieces <md5> [3 5 7]" : envoie l'en-tête puis les données binaires
     private void handleGetPieces(String line, PrintWriter writer, OutputStream out) throws IOException {
         int spaceAfterCmd = line.indexOf(' ');
         int spaceAfterMd5 = line.indexOf(' ', spaceAfterCmd + 1);
-        String md5 = line.substring(spaceAfterCmd + 1, spaceAfterMd5);
-        int start = line.indexOf('[');
-        int end = line.indexOf(']');
-        String res = line.substring(start + 1, end).trim();
+        String md5   = line.substring(spaceAfterCmd + 1, spaceAfterMd5);
+        int    start = line.indexOf('[');
+        int    end   = line.indexOf(']');
+        String res   = line.substring(start + 1, end).trim();
         String[] parts = res.split(" ");
+
         FileManager.FileInfo fileInfo = findFileByMd5(md5);
         if (fileInfo == null) {
             writer.println("error file not found");
             return;
         }
 
+        // Construction de l'en-tête : "data <md5> [<index> 1024 <index> 1024 ...]"
         StringBuilder header = new StringBuilder("data " + md5 + " [");
         for (int i = 0; i < parts.length; i++) {
             if (i > 0) header.append(" ");
@@ -105,16 +110,18 @@ try (ServerSocket serverSocket = new ServerSocket(config.peerPort)) {
         header.append("]");
         writer.println(header.toString());
         System.out.println("[DEBUG] << " + header);
+
+        // Envoi des données binaires de chaque pièce demandée
         for (String pieceIndexStr : parts) {
-            int pieceIndex = Integer.parseInt(pieceIndexStr.trim());
-            byte[] pieceData = fileManager.readPiece(fileInfo.filename, pieceIndex);
+            int    pieceIndex = Integer.parseInt(pieceIndexStr.trim());
+            byte[] pieceData  = fileManager.readPiece(fileInfo.filename, pieceIndex);
             out.write(pieceData);
         }
         out.flush();
         System.out.println("[INFO] " + parts.length + " pièce(s) envoyée(s) pour " + fileInfo.filename);
     }
 
-    // cherche dans shared/ le fichier dont le md5 correspond
+    // Parcourt les fichiers partagés et retourne celui dont le MD5 correspond
     private FileManager.FileInfo findFileByMd5(String md5) throws IOException {
         for (FileManager.FileInfo fi : fileManager.listSharedFiles()) {
             if (fi.md5.equals(md5)) return fi;
@@ -122,6 +129,7 @@ try (ServerSocket serverSocket = new ServerSocket(config.peerPort)) {
         return null;
     }
 
+    // Retourne un buffermap vide encodé en Base64 (peer ne possède pas le fichier)
     private String encodedEmptyBuffermap(int nbBytes) {
         return Base64.getEncoder().encodeToString(new byte[nbBytes]);
     }

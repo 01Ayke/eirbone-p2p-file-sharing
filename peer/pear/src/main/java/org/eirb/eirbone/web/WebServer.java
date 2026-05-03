@@ -30,12 +30,13 @@ public class WebServer {
         this.fileManager     = fileManager;
     }
 
+    // Démarre le serveur HTTP sur le port configuré et enregistre tous les contextes
     public void start() throws IOException {
         server = HttpServer.create(new InetSocketAddress(config.webPort), 0);
         server.setExecutor(Executors.newCachedThreadPool());
 
-        server.createContext("/", this::handleStatic);
-        server.createContext("/api/files",          this::handleApiFiles);
+        server.createContext("/",                    this::handleStatic);
+        server.createContext("/api/files",           this::handleApiFiles);
         server.createContext("/api/peers",           this::handleApiPeers);
         server.createContext("/api/download",        this::handleApiDownload);
         server.createContext("/api/downloads",       this::handleApiDownloads);
@@ -52,13 +53,14 @@ public class WebServer {
     }
 
     // -------------------------------------------------------------------------
-    // Static assets
+    // Ressources statiques
     // -------------------------------------------------------------------------
 
+    // GET / — sert le fichier index.html embarqué dans le classpath
     private void handleStatic(HttpExchange ex) throws IOException {
         if (!ex.getRequestMethod().equals("GET")) { send(ex, 405, "text/plain", "Method Not Allowed"); return; }
         InputStream is = getClass().getResourceAsStream("/web/index.html");
-        if (is == null) { send(ex, 404, "text/plain", "UI not found"); return; }
+        if (is == null) { send(ex, 404, "text/plain", "UI non trouvée"); return; }
         byte[] body = is.readAllBytes();
         ex.getResponseHeaders().set("Content-Type", "text/html; charset=utf-8");
         ex.sendResponseHeaders(200, body.length);
@@ -66,7 +68,7 @@ public class WebServer {
     }
 
     // -------------------------------------------------------------------------
-    // API: GET /api/files?search=...
+    // GET /api/files?search=... — liste les fichiers disponibles sur le réseau
     // -------------------------------------------------------------------------
 
     private void handleApiFiles(HttpExchange ex) throws IOException {
@@ -94,7 +96,7 @@ public class WebServer {
     }
 
     // -------------------------------------------------------------------------
-    // API: GET /api/peers?md5=...
+    // GET /api/peers?md5=... — retourne les peers qui possèdent un fichier donné
     // -------------------------------------------------------------------------
 
     private void handleApiPeers(HttpExchange ex) throws IOException {
@@ -119,8 +121,8 @@ public class WebServer {
     }
 
     // -------------------------------------------------------------------------
-    // API: POST /api/download
-    // body: {"filename":"...","md5":"...","size":N,"peerIp":"...","peerPort":N}
+    // POST /api/download — lance un téléchargement vers un peer choisi
+    // Corps : {"filename":"...","md5":"...","size":N,"peerIp":"...","peerPort":N}
     // -------------------------------------------------------------------------
 
     private void handleApiDownload(HttpExchange ex) throws IOException {
@@ -143,13 +145,13 @@ public class WebServer {
     }
 
     // -------------------------------------------------------------------------
-    // API: GET /api/downloads
+    // GET /api/downloads — retourne toutes les tâches triées par date décroissante
     // -------------------------------------------------------------------------
 
     private void handleApiDownloads(HttpExchange ex) throws IOException {
         if (!ex.getRequestMethod().equals("GET")) { send(ex, 405, "application/json", "{}"); return; }
         Collection<DownloadManager.DownloadTask> tasks = downloadManager.getTasks();
-        // sort by startTime descending
+        // Tri par date de début décroissante (plus récent en premier)
         List<DownloadManager.DownloadTask> sorted = new ArrayList<>(tasks);
         sorted.sort((a, b) -> Long.compare(b.startTime, a.startTime));
         StringBuilder sb = new StringBuilder("[");
@@ -175,7 +177,7 @@ public class WebServer {
     }
 
     // -------------------------------------------------------------------------
-    // API: GET /api/shared
+    // GET /api/shared — liste les fichiers présents localement dans shared/
     // -------------------------------------------------------------------------
 
     private void handleApiShared(HttpExchange ex) throws IOException {
@@ -200,7 +202,7 @@ public class WebServer {
     }
 
     // -------------------------------------------------------------------------
-    // API: GET /api/status
+    // GET /api/status — état de la connexion au tracker et configuration du peer
     // -------------------------------------------------------------------------
 
     private void handleApiStatus(HttpExchange ex) throws IOException {
@@ -214,8 +216,8 @@ public class WebServer {
     }
 
     // -------------------------------------------------------------------------
-    // API: POST /api/tracker/connect
-    // body: {"address":"192.168.1.5","port":9000}
+    // POST /api/tracker/connect — reconnecte le peer à un nouveau tracker
+    // Corps : {"address":"192.168.1.5","port":9000}
     // -------------------------------------------------------------------------
 
     private void handleApiTrackerConnect(HttpExchange ex) throws IOException {
@@ -227,7 +229,7 @@ public class WebServer {
             if (address == null || address.isEmpty()) { sendJson(ex, 400, err("address manquant")); return; }
             if (port == 0) port = config.trackerPort;
 
-            // déconnecter proprement si déjà connecté
+            // Déconnexion propre de l'ancienne session si elle existe
             if (tracker.isConnected()) {
                 tracker.bye();
                 tracker.disconnect();
@@ -243,7 +245,7 @@ public class WebServer {
     }
 
     // -------------------------------------------------------------------------
-    // Helpers
+    // Méthodes utilitaires
     // -------------------------------------------------------------------------
 
     private void sendJson(HttpExchange ex, int code, String json) throws IOException {
@@ -258,6 +260,7 @@ public class WebServer {
         try (OutputStream os = ex.getResponseBody()) { os.write(bytes); }
     }
 
+    // Extrait la valeur d'un paramètre depuis la chaîne de requête URL
     private static String queryParam(String query, String key) {
         if (query == null) return null;
         for (String pair : query.split("&")) {
@@ -269,24 +272,28 @@ public class WebServer {
         return null;
     }
 
+    // Construit un objet JSON d'erreur : {"error":"..."}
     private static String err(String msg) {
         return "{" + jStr("error", msg == null ? "unknown" : msg) + "}";
     }
 
+    // Construit un champ JSON de type chaîne : "clé":"valeur"
     private static String jStr(String k, String v) {
         return "\"" + escJson(k) + "\":\"" + escJson(v == null ? "" : v) + "\"";
     }
 
+    // Construit un champ JSON de type nombre : "clé":valeur
     private static String jNum(String k, long v) {
         return "\"" + escJson(k) + "\":" + v;
     }
 
+    // Échappe les caractères spéciaux pour une chaîne JSON valide
     private static String escJson(String s) {
         return s.replace("\\", "\\\\").replace("\"", "\\\"")
                 .replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t");
     }
 
-    // minimal JSON field extractor for POST bodies
+    // Extracteur JSON minimal pour les corps de requêtes POST (évite une dépendance externe)
     private static String jsonStr(String json, String key) {
         String search = "\"" + key + "\"";
         int idx = json.indexOf(search);
@@ -300,6 +307,7 @@ public class WebServer {
         return json.substring(q1 + 1, q2);
     }
 
+    // Extrait un entier depuis un corps JSON — retourne 0 si le champ est absent
     private static long jsonLong(String json, String key) {
         String search = "\"" + key + "\"";
         int idx = json.indexOf(search);
