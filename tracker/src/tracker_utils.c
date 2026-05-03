@@ -8,6 +8,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include "tracker_utils.h"
+#include "tracker_protocol.h"
 
 static FILE *log_fp = NULL;
 static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
