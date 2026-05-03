@@ -127,7 +127,7 @@ void test_load_config_nonexistent() {
 }
 
 int main() {
-    printf("\n %s-> tracker_config Tests%s\n", purple, reset);
+    printf("\n%s-> tracker_config Tests%s\n", purple, reset);
     
     test_trim_newline();
     test_trim_spaces();
