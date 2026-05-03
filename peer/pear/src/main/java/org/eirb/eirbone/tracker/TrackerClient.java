@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class TrackerClient {
 
@@ -18,6 +19,10 @@ public class TrackerClient {
     private Socket         socket;
     private BufferedReader reader;
     private PrintWriter    writer;
+    private volatile boolean connected = false;
+
+    // MD5 des fichiers en cours de téléchargement (leech) — thread-safe
+    private final Set<String> leechKeys = ConcurrentHashMap.newKeySet();
 
     public TrackerClient(Config config, FileManager fileManager) {
         this.config      = config;
@@ -33,22 +38,43 @@ public class TrackerClient {
         System.out.println("[INFO] Connecté au tracker " + config.trackerAddress + ":" + config.trackerPort);
     }
 
-    private volatile boolean connected = false;
-
     public boolean isConnected() { return connected; }
 
-    // Annonce ce peer au tracker avec la liste des fichiers partagés
+    /** Déclare un fichier comme étant en cours de téléchargement. */
+    public void addLeech(String md5) {
+        leechKeys.add(md5);
+    }
+
+    /** Retire un fichier de la liste leech (téléchargement terminé ou annulé). */
+    public void removeLeech(String md5) {
+        leechKeys.remove(md5);
+    }
+
+    /**
+     * Annonce initiale : "announce listen $Port seed [...] leech [...]"
+     * Les fichiers en leech sont exclus de la liste seed.
+     */
     public synchronized void announce() throws IOException {
         if (!connected) throw new IOException("Non connecté au tracker");
         List<FileManager.FileInfo> files = fileManager.listSharedFiles();
         StringBuilder sb = new StringBuilder();
         sb.append("announce listen ").append(config.peerPort);
         sb.append(" seed [");
-        for (int i = 0; i < files.size(); i++) {
-            if (i > 0) sb.append(" ");
-            sb.append(files.get(i).toString());
+        boolean first = true;
+        for (FileManager.FileInfo f : files) {
+            if (leechKeys.contains(f.md5)) continue; // pas encore complet
+            if (!first) sb.append(" ");
+            sb.append(f.toString());
+            first = false;
         }
-        sb.append("] leech []");
+        sb.append("] leech [");
+        first = true;
+        for (String md5 : leechKeys) {
+            if (!first) sb.append(" ");
+            sb.append(md5);
+            first = false;
+        }
+        sb.append("]");
         String msg = sb.toString();
         System.out.println("[DEBUG] >> " + msg);
         writer.println(msg);
@@ -57,7 +83,22 @@ public class TrackerClient {
         if (!"ok".equals(response)) {
             throw new IOException("Announce refusé par le tracker : " + response);
         }
-        System.out.println("[INFO] Announce OK — " + files.size() + " fichier(s) partagé(s)");
+        System.out.println("[INFO] Announce OK — seed=" + (files.size() - leechKeys.size())
+            + " fichier(s), leech=" + leechKeys.size() + " fichier(s)");
+    }
+
+    /**
+     * Mise à jour périodique : "update seed [...] leech [...]"
+     * À appeler depuis le thread de mise à jour (pas announce).
+     */
+    public synchronized void sendUpdate() throws IOException {
+        if (!connected) return;
+        List<FileManager.FileInfo> files = fileManager.listSharedFiles();
+        List<String> seedMd5s = new ArrayList<>();
+        for (FileManager.FileInfo f : files) {
+            if (!leechKeys.contains(f.md5)) seedMd5s.add(f.md5);
+        }
+        update(seedMd5s, new ArrayList<>(leechKeys));
     }
 
     // Représente l'adresse réseau d'un peer retournée par getfile
@@ -117,10 +158,7 @@ public class TrackerClient {
                 f.pieceSize = Integer.parseInt(tokens[i + 2]);
             } catch (NumberFormatException ignored) { continue; }
             f.md5 = tokens[i + 3];
-            // dédoublonnage par MD5 : un seul fichier par empreinte
-            if (seenMd5.add(f.md5)) {
-                files.add(f);
-            }
+            if (seenMd5.add(f.md5)) files.add(f);
         }
         return files;
     }
@@ -152,19 +190,21 @@ public class TrackerClient {
     }
 
     // Met à jour la liste des fichiers seed et leech auprès du tracker
-    public synchronized void update(List<String> seedKeys, List<String> leechKeys) throws IOException {
+    public synchronized void update(List<String> seedMd5s, List<String> leechMd5s) throws IOException {
         StringBuilder sb = new StringBuilder("update seed [");
-        for (int i = 0; i < seedKeys.size(); i++) {
+        for (int i = 0; i < seedMd5s.size(); i++) {
             if (i > 0) sb.append(" ");
-            sb.append(seedKeys.get(i));
+            sb.append(seedMd5s.get(i));
         }
         sb.append("] leech [");
-        for (int i = 0; i < leechKeys.size(); i++) {
+        for (int i = 0; i < leechMd5s.size(); i++) {
             if (i > 0) sb.append(" ");
-            sb.append(leechKeys.get(i));
+            sb.append(leechMd5s.get(i));
         }
         sb.append("]");
-        writer.println(sb.toString());
+        String msg = sb.toString();
+        System.out.println("[DEBUG] >> " + msg);
+        writer.println(msg);
         String response = reader.readLine();
         if (!"ok".equals(response)) {
             System.err.println("[WARN] Mise à jour tracker : réponse inattendue : " + response);
