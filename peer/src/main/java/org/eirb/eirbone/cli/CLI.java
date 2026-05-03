@@ -18,14 +18,15 @@ public class CLI {
         this.downloadManager = downloadManager;
     }
 
-    // boucle principale qui tourne dans le thread main
+    // Boucle principale qui s'exécute dans le thread principal jusqu'à la commande "quit"
     public void run() {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Commandes : download <fichier>  |  list <fichier>  |  quit");
-        
+
         while (scanner.hasNextLine()) {
             String line = scanner.nextLine().trim();
             if (line.isEmpty()) continue;
+            // On découpe sur le premier espace uniquement pour préserver les noms avec espaces
             String[] parts = line.split(" ", 2);
             String cmd = parts[0];
 
@@ -50,7 +51,9 @@ public class CLI {
 
                 case "quit":
                     System.out.println("[INFO] Au revoir.");
-                    return; // sort de run(), le main continue avec bye(); disconnect();
+                    // Sort de run() — le thread principal enchaîne avec bye() et disconnect()
+                    return;
+
                 default:
                     System.out.println("Commande inconnue : " + cmd);
             }

@@ -6,48 +6,67 @@ import org.eirb.eirbone.download.DownloadManager;
 import org.eirb.eirbone.peer.PeerServer;
 import org.eirb.eirbone.storage.FileManager;
 import org.eirb.eirbone.tracker.TrackerClient;
+import org.eirb.eirbone.web.WebServer;
 
 public class Main {
 
     public static void main(String[] args) throws Exception {
 
-        // charger la config
         Config config = new Config("config.ini");
+        // arguments optionnels : [port-peer] [ip-tracker] [port-tracker]
+        if (args.length > 0) config.peerPort        = Integer.parseInt(args[0]);
+        if (args.length > 1) config.trackerAddress   = args[1];
+        if (args.length > 2) config.trackerPort      = Integer.parseInt(args[2]);
+
         FileManager fileManager = new FileManager(config.sharedDir);
-        
-        // se connecter au tracker
         TrackerClient tracker = new TrackerClient(config, fileManager);
-        tracker.connect();
-        tracker.announce();
-        // lancer le serveur peer pour partager nos fichiers
+        DownloadManager downloadManager = new DownloadManager(config, tracker, fileManager);
+
+        // Le serveur web démarre en premier — accessible même si le tracker est indisponible
+        WebServer webServer = new WebServer(config, tracker, downloadManager, fileManager);
+        webServer.start();
+
+        // Connexion au tracker (non fatale : l'interface web reste accessible)
+        try {
+            tracker.connect();
+            tracker.announce();
+        } catch (Exception e) {
+            System.err.println("[WARN] Tracker indisponible : " + e.getMessage());
+            System.err.println("[WARN] L'interface web est accessible. Relancez le tracker puis reconnectez.");
+        }
+
+        // Démarrage du serveur P2P en tâche de fond
         PeerServer server = new PeerServer(config, fileManager);
         Thread serverThread = new Thread(server, "peer-server");
         serverThread.setDaemon(true);
         serverThread.start();
-        // lancer un thread qui fait un announce périodique pour mettre à jour le tracker
+
+        // Annonces périodiques au tracker (toutes les updateIntervalSec secondes)
         Thread updateThread = new Thread(() -> {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     Thread.sleep(config.updateIntervalSec * 1000L);
-                    // Version minimale : on renvoie juste les fichiers qu'on a
-                    tracker.announce();
+                    if (tracker.isConnected()) tracker.announce();
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 } catch (Exception e) {
-                    System.err.println("[WARN] update échoué : " + e.getMessage());
+                    System.err.println("[WARN] Mise à jour du tracker échouée : " + e.getMessage());
                 }
             }
         }, "tracker-updater");
         updateThread.setDaemon(true);
         updateThread.start();
-        // lancer la CLI dans le thread main
-        DownloadManager downloadManager = new DownloadManager(config, tracker, fileManager);
+
+        // Boucle CLI — bloque le thread principal jusqu'à la commande "quit"
         CLI cli = new CLI(config, tracker, downloadManager);
         cli.run();
-        // quand la CLI se termine on arrête proprement
-        //updateThread.interrupt();
-        tracker.bye();
-        tracker.disconnect();
+
+        // Arrêt propre
+        webServer.stop();
+        if (tracker.isConnected()) {
+            tracker.bye();
+            tracker.disconnect();
+        }
         System.out.println("[INFO] Peer arrêté.");
     }
 }
