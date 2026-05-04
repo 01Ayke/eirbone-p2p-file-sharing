@@ -57,7 +57,7 @@ public class PeerServer implements Runnable {
                     handleGetPieces(line, writer, out);
                 } else if (line.startsWith("have ")) {
                     malformedConsecutive = 0;
-                    handleHave(line, peerAddr);
+                    handleHave(line, writer, peerAddr);
                 } else {
                     malformedConsecutive++;
                     System.out.println("[WARN] Message malformé (" + malformedConsecutive
@@ -149,16 +149,36 @@ public class PeerServer implements Runnable {
     }
 
     /**
-     * Reçoit "have <md5> <buffermap_base64>" d'un leecher.
-     * Met à jour la connaissance du buffermap de ce peer pour usage futur.
+     * Reçoit "have <md5> <buffermap_base64>" d'un peer.
+     * Répond avec notre propre buffermap pour le même fichier.
      */
-    private void handleHave(String line, String peerAddr) {
+    private void handleHave(String line, PrintWriter writer, String peerAddr) throws IOException {
         String[] parts = line.split(" ", 3);
         if (parts.length < 3) return;
-        String md5        = parts[1];
-        String buffermap  = parts[2];
+        String md5       = parts[1];
+        String buffermap = parts[2];
         System.out.println("[INFO] Buffermap reçu de " + peerAddr
             + " pour " + md5 + " : " + buffermap);
+
+        FileManager.FileInfo fileInfo = findFileByMd5(md5);
+        if (fileInfo == null) {
+            writer.println("have " + md5 + " " + Base64.getEncoder().encodeToString(new byte[0]));
+            return;
+        }
+
+        int nbPieces = (int) Math.ceil((double) fileInfo.length / 1024);
+        int nbBytes  = (nbPieces + 7) / 8;
+        byte[] bm    = new byte[nbBytes];
+
+        Set<Integer> owned = fileManager.getOwnedPieces(fileInfo.filename, fileInfo.length);
+        for (int i : owned) {
+            if (i < nbPieces) bm[i / 8] |= (byte) (1 << (7 - (i % 8)));
+        }
+
+        String encoded = Base64.getEncoder().encodeToString(bm);
+        writer.println("have " + md5 + " " + encoded);
+        System.out.println("[INFO] Réponse have envoyée à " + peerAddr
+            + " pour " + md5 + " (" + owned.size() + "/" + nbPieces + " pièces)");
     }
 
     private FileManager.FileInfo findFileByMd5(String md5) throws IOException {

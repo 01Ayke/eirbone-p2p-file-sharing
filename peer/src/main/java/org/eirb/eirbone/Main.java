@@ -46,7 +46,7 @@ public class Main {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     Thread.sleep(config.updateIntervalSec * 1000L);
-                    if (tracker.isConnected()) tracker.announce();
+                    if (tracker.isConnected()) tracker.sendUpdate();
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 } catch (Exception e) {

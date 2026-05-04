@@ -217,6 +217,10 @@ public class PeerClient {
                 entry.getValue().writer.println(msg);
                 System.out.println("[INFO] have envoyé à " + entry.getKey()
                     + " (" + owned.size() + "/" + totalPieces + " pièces)");
+                // Lit la réponse "have" du peer distant pour garder le flux synchronisé
+                String response = entry.getValue().readLine();
+                System.out.println("[INFO] have reçu en réponse de " + entry.getKey()
+                    + " : " + response);
             } catch (Exception e) {
                 broken.add(entry.getKey());
             }

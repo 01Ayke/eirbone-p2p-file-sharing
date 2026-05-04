@@ -351,6 +351,8 @@ void handle_client(int client_fd, struct sockaddr_in *client_addr) {
 
     log_message("INFO", "Connexion: %s", ctx.client_ip);
 
+    int malformed_count = 0;
+
     while (1) {
         int r = read_line(client_fd, line, sizeof(line));
         if (r <= 0) break;
@@ -360,13 +362,23 @@ void handle_client(int client_fd, struct sockaddr_in *client_addr) {
 
         log_message("DEBUG", "%s >> %s", ctx.client_ip, line);
 
-        if      (starts_with(line, "announce ")) handle_announce(client_fd, line, &ctx);
-        else if (starts_with(line, "look") && (line[4] == '\0' || line[4] == ' ' || line[4] == '\n')) handle_look(client_fd, line);
-        else if (starts_with(line, "getfile "))  handle_getfile(client_fd, line);
-        else if (starts_with(line, "update "))   handle_update(client_fd, line, &ctx);
+        if      (starts_with(line, "announce ")) { malformed_count = 0; handle_announce(client_fd, line, &ctx); }
+        else if (starts_with(line, "look") && (line[4] == '\0' || line[4] == ' ' || line[4] == '\n')) { malformed_count = 0; handle_look(client_fd, line); }
+        else if (starts_with(line, "getfile "))  { malformed_count = 0; handle_getfile(client_fd, line); }
+        else if (starts_with(line, "update "))   { malformed_count = 0; handle_update(client_fd, line, &ctx); }
         else if (starts_with(line, "bye") ||
                  starts_with(line, "BYE"))       { handle_bye(client_fd, &ctx); break; }
-        else send_response(client_fd, "error unknown command\n");
+        else {
+            malformed_count++;
+            send_response(client_fd, "error unknown command\n");
+            log_message("WARN", "Message malformé (%d/3) de %s : %s",
+                        malformed_count, ctx.client_ip, line);
+            if (malformed_count >= 3) {
+                log_message("WARN", "3 messages malformés consécutifs — fermeture connexion %s",
+                            ctx.client_ip);
+                break;
+            }
+        }
     }
 
     /* Déconnexion sans bye : nettoyage de l'état du peer */

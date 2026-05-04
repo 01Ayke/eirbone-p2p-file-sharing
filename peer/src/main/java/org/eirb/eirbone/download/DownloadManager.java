@@ -122,6 +122,9 @@ public class DownloadManager {
         tracker.addLeech(md5);
         notifyTracker();
 
+        // Crée le manifeste initial (0 pièces) pour persister l'état du téléchargement
+        fileManager.writeManifest(md5, filename, md5, length, new ArrayList<>());
+
         System.out.println("[INFO] " + peers.size() + " peer(s) disponible(s) pour " + filename
             + " — " + totalPieces + " pièce(s) à récupérer");
 
@@ -140,6 +143,8 @@ public class DownloadManager {
                         + peer.ip + ":" + peer.port
                         + " — progression : " + owned.size() + "/" + totalPieces);
                     if (!downloaded.isEmpty()) {
+                        // Mise à jour du manifeste avec les pièces nouvellement acquises
+                        fileManager.writeManifest(md5, filename, md5, length, new ArrayList<>(owned));
                         // Informer tous les peers connectés du buffermap mis à jour
                         client.broadcastHave(md5, owned, totalPieces);
                     }
@@ -162,9 +167,10 @@ public class DownloadManager {
             return;
         }
 
-        // Finalisation : supprime le padding et renomme le fichier temporaire
+        // Finalisation : supprime le padding, renomme le fichier temporaire, supprime le manifeste
         fileManager.truncate(md5, length);
         fileManager.renameAfterDownload(md5, filename);
+        fileManager.deleteManifest(md5);
         System.out.println("[INFO] ✓ Téléchargement terminé : " + filename
             + " (" + owned.size() + "/" + totalPieces + " pièces, "
             + length + " octets)");

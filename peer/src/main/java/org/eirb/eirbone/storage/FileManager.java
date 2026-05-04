@@ -108,13 +108,21 @@ public class FileManager {
         }
     }
 
-    /** Écrit (ou met à jour) le manifeste sidecar d'un fichier partiel. */
-    public void writeManifest(String filename, String md5, long totalSize,
+    /**
+     * Écrit (ou met à jour) le manifeste sidecar d'un fichier partiel.
+     *
+     * @param fileKey        nom du fichier temporaire dans shared/ (aussi le nom du sidecar .manifest)
+     * @param targetFilename nom définitif du fichier une fois téléchargé
+     * @param md5            empreinte MD5 du fichier complet
+     * @param totalSize      taille totale du fichier complet en octets
+     * @param pieces         indices des pièces déjà possédées
+     */
+    public void writeManifest(String fileKey, String targetFilename, String md5, long totalSize,
                                List<Integer> pieces) throws IOException {
-        File mf = new File(sharedDir, filename + ".manifest");
+        File mf = new File(sharedDir, fileKey + ".manifest");
         try (PrintWriter pw = new PrintWriter(new FileWriter(mf))) {
             pw.println("md5=" + md5);
-            pw.println("filename=" + filename);
+            pw.println("filename=" + targetFilename);
             pw.println("size=" + totalSize);
             StringBuilder sb = new StringBuilder("pieces=");
             List<Integer> sorted = new ArrayList<>(pieces);
@@ -125,6 +133,11 @@ public class FileManager {
             }
             pw.println(sb);
         }
+    }
+
+    /** Supprime le manifeste sidecar (appelé à la fin d'un téléchargement réussi). */
+    public void deleteManifest(String fileKey) {
+        new File(sharedDir, fileKey + ".manifest").delete();
     }
 
     /**

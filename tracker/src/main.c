@@ -12,12 +12,22 @@
 #include "tracker_protocol.h"
 #include "tracker_utils.h"
 
-int main(void) {
+int main(int argc, char *argv[]) {
     Config cfg;
     set_default_config(&cfg);
 
     if (load_config("config.ini", &cfg) != 0) {
         printf("config.ini non trouvé, valeurs par défaut utilisées\n");
+    }
+
+    if (argc > 1) {
+        int port = atoi(argv[1]);
+        if (port > 0 && port <= 65535) {
+            cfg.tracker_port = port;
+        } else {
+            fprintf(stderr, "Port invalide : %s\n", argv[1]);
+            return 1;
+        }
     }
 
     log_init(cfg.log_file);
