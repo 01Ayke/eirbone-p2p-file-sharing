@@ -37,12 +37,12 @@ public class PeerServer implements Runnable {
     private void handlePeer(Socket socket) {
         String peerAddr = socket.getInetAddress().getHostAddress() + ":" + socket.getPort();
         System.out.println("[INFO] Peer connecté : " + peerAddr);
-        // Compteur de messages malformés consécutifs — la connexion se ferme à 3
         int malformedConsecutive = 0;
         try (
-            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            OutputStream   out    = socket.getOutputStream();
-            PrintWriter    writer = new PrintWriter(out, true)
+            Socket         ignored = socket;   // garantit socket.close() en sortie
+            BufferedReader reader  = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            OutputStream   out     = socket.getOutputStream();
+            PrintWriter    writer  = new PrintWriter(out, true)
         ) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -60,6 +60,7 @@ public class PeerServer implements Runnable {
                     handleHave(line, writer, peerAddr);
                 } else {
                     malformedConsecutive++;
+                    writer.println("error malformed message");
                     System.out.println("[WARN] Message malformé (" + malformedConsecutive
                         + "/3) de " + peerAddr + " : " + line);
                     if (malformedConsecutive >= 3) {

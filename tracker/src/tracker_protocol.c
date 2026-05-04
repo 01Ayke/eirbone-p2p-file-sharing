@@ -141,18 +141,29 @@ void handle_announce(int client_fd, const char *line, ClientContext *ctx) {
     ctx->listen_port = listen_port;
     ctx->peer        = peer;
 
-    /* Supprime le peer des listes d'owners des fichiers qu'il seedait avant */
+    /* Retire le peer des owners de tous les fichiers (seed + leech) */
     char owner[64];
     snprintf(owner, sizeof(owner), "%s:%d", ctx->client_ip, listen_port);
     for (int i = 0; i < peer->seed_count; i++) {
         FileEntry *f = find_file_by_key(peer->seeded_keys[i]);
         if (f) remove_owner_from_file(f, owner);
     }
+    for (int i = 0; i < peer->leech_count; i++) {
+        FileEntry *f = find_file_by_key(peer->leeched_keys[i]);
+        if (f) remove_owner_from_file(f, owner);
+    }
 
     clear_peer_keys(peer);
 
     if (seed_block[0])  parse_seed_list_and_register(peer, ctx->client_ip, seed_block);
-    if (leech_block[0]) parse_key_list(peer, leech_block, 0);
+    if (leech_block[0]) {
+        parse_key_list(peer, leech_block, 0);
+        /* Ajoute le leecher comme owner partiel : getfile retournera aussi les leechers */
+        for (int i = 0; i < peer->leech_count; i++) {
+            FileEntry *f = find_file_by_key(peer->leeched_keys[i]);
+            if (f) add_owner_to_file(f, owner);
+        }
+    }
 
     purge_orphan_files();
 
@@ -282,9 +293,13 @@ void handle_update(int client_fd, const char *line, ClientContext *ctx) {
 
     storage_lock();
 
-    /* 1. Retire le peer des owners de tous les fichiers qu'il seedait */
+    /* 1. Retire le peer des owners de tous les fichiers (seed + leech) */
     for (int i = 0; i < peer->seed_count; i++) {
         FileEntry *f = find_file_by_key(peer->seeded_keys[i]);
+        if (f) remove_owner_from_file(f, owner);
+    }
+    for (int i = 0; i < peer->leech_count; i++) {
+        FileEntry *f = find_file_by_key(peer->leeched_keys[i]);
         if (f) remove_owner_from_file(f, owner);
     }
 
@@ -297,9 +312,13 @@ void handle_update(int client_fd, const char *line, ClientContext *ctx) {
     if (seed_block[0])  parse_key_list(peer, seed_block, 1);
     if (leech_block[0]) parse_key_list(peer, leech_block, 0);
 
-    /* 4. Ré-ajoute le peer comme owner pour les fichiers seedés */
+    /* 4. Ré-ajoute le peer comme owner pour les fichiers seedés ET leeché */
     for (int i = 0; i < peer->seed_count; i++) {
         FileEntry *f = find_file_by_key(peer->seeded_keys[i]);
+        if (f) add_owner_to_file(f, owner);
+    }
+    for (int i = 0; i < peer->leech_count; i++) {
+        FileEntry *f = find_file_by_key(peer->leeched_keys[i]);
         if (f) add_owner_to_file(f, owner);
     }
 
@@ -324,6 +343,10 @@ void handle_bye(int client_fd, ClientContext *ctx) {
         storage_lock();
         for (int i = 0; i < ctx->peer->seed_count; i++) {
             FileEntry *f = find_file_by_key(ctx->peer->seeded_keys[i]);
+            if (f) remove_owner_from_file(f, owner);
+        }
+        for (int i = 0; i < ctx->peer->leech_count; i++) {
+            FileEntry *f = find_file_by_key(ctx->peer->leeched_keys[i]);
             if (f) remove_owner_from_file(f, owner);
         }
         ctx->peer->connected  = 0;
@@ -389,6 +412,10 @@ void handle_client(int client_fd, struct sockaddr_in *client_addr) {
         storage_lock();
         for (int i = 0; i < ctx.peer->seed_count; i++) {
             FileEntry *f = find_file_by_key(ctx.peer->seeded_keys[i]);
+            if (f) remove_owner_from_file(f, owner);
+        }
+        for (int i = 0; i < ctx.peer->leech_count; i++) {
+            FileEntry *f = find_file_by_key(ctx.peer->leeched_keys[i]);
             if (f) remove_owner_from_file(f, owner);
         }
         ctx.peer->connected   = 0;

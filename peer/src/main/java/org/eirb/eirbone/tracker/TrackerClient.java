@@ -125,7 +125,9 @@ public class TrackerClient {
     // Envoie une requête "look" au tracker et retourne la réponse brute
     public synchronized String look(String filename) throws IOException {
         if (!connected) throw new IOException("Non connecté au tracker");
-        String msg = "look [filename=" + filename + "]";
+        String msg = (filename == null || filename.isEmpty())
+                ? "look []"
+                : "look [filename=" + filename + "]";
         writer.println(msg);
         System.out.println("[DEBUG] >> " + msg);
         String response = reader.readLine();
